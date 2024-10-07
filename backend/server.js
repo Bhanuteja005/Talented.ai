@@ -4,31 +4,32 @@ const mongoose = require("mongoose");
 const passportConfig = require("./lib/passportConfig");
 const cors = require("cors");
 const fs = require("fs");
+require('dotenv').config(); // Import and configure dotenv
 
 // MongoDB
 mongoose
-  .connect("mongodb+srv://Bhanuteja005:Bhanu%402005@bhanuteja.gueaogg.mongodb.net/java?retryWrites=true&w=majority&appName=BhanuTeja", {
+  .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
     useFindAndModify: false,
   })
   .then((res) => console.log("Connected to DB"))
-  .catch((err) => console.log(err));
+  .catch((err) => {
+    console.error("Error connecting to DB:", err);
+    process.exit(1); // Exit the process with an error code
+  });
 
-// initialising directories
-if (!fs.existsSync("./public")) {
-  fs.mkdirSync("./public");
-}
-if (!fs.existsSync("./public/resume")) {
-  fs.mkdirSync("./public/resume");
-}
-if (!fs.existsSync("./public/profile")) {
-  fs.mkdirSync("./public/profile");
-}
+// Initialising directories
+const directories = ["./public", "./public/resume", "./public/profile"];
+directories.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 const app = express();
-const port = 4444;
+const port = process.env.PORT || 4444;
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
@@ -43,6 +44,12 @@ app.use("/auth", require("./routes/authRoutes"));
 app.use("/api", require("./routes/apiRoutes"));
 app.use("/upload", require("./routes/uploadRoutes"));
 app.use("/host", require("./routes/downloadRoutes"));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
 
 app.listen(port, () => {
   console.log(`Server started on port ${port}!`);
