@@ -1,4 +1,4 @@
-export const server = "http://localhost:4444";
+export const server = "https://talented-ai-api.vercel.app";
 
 const apiList = {
   login: `${server}/auth/login`,
