@@ -49,6 +49,11 @@ app.use("/api", require("./routes/apiRoutes"));
 app.use("/upload", require("./routes/uploadRoutes"));
 app.use("/host", require("./routes/downloadRoutes"));
 
+// Route to indicate server is running
+app.get("/", (req, res) => {
+  res.send("<h1>Server is running!</h1>");
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
