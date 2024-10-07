@@ -36,7 +36,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 // Setting up middlewares
 app.use(cors({
-  origin: 'https://talented-aii.vercel.app/', // Replace with your frontend's URL
+  origin: 'https://talented-aii.vercel.app', // Replace with your frontend's URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
