@@ -6,13 +6,14 @@ const cors = require("cors");
 const fs = require("fs");
 require('dotenv').config(); // Import and configure dotenv
 
+// Set mongoose strictQuery option
+mongoose.set('strictQuery', true);
+
 // MongoDB
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
   })
   .then((res) => console.log("Connected to DB"))
   .catch((err) => {
