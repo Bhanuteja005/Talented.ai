@@ -3,21 +3,12 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const passportConfig = require("./lib/passportConfig");
 const cors = require("cors");
-const fs = require("fs");
 require('dotenv').config(); // Import and configure dotenv
 
 // Set mongoose strictQuery option
 mongoose.set('strictQuery', true);
 
-// Initialising directories
-const directories = ["./public", "./public/resume", "./public/profile"];
-directories.forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-// MongoDB
+// MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
