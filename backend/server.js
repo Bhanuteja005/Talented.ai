@@ -9,6 +9,14 @@ require('dotenv').config(); // Import and configure dotenv
 // Set mongoose strictQuery option
 mongoose.set('strictQuery', true);
 
+// Initialising directories
+const directories = ["./public", "./public/resume", "./public/profile"];
+directories.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
 // MongoDB
 mongoose
   .connect(process.env.MONGODB_URI, {
@@ -20,14 +28,6 @@ mongoose
     console.error("Error connecting to DB:", err);
     process.exit(1); // Exit the process with an error code
   });
-
-// Initialising directories
-const directories = ["./public", "./public/resume", "./public/profile"];
-directories.forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
 
 const app = express();
 const port = process.env.PORT || 4444;
