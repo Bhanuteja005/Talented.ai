@@ -1,8 +1,10 @@
 import { Typography } from "@material-ui/core";
 import { motion } from "framer-motion";
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import { useAnimations } from "../Hooks/useAnimations";
+import { Accordion } from "./query";
+import { Services } from "./services";
 
 // Styled components for the layout
 const WelcomeStyles = styled(motion.div)`
@@ -12,6 +14,7 @@ const WelcomeStyles = styled(motion.div)`
   justify-content: space-between;
   padding: 2rem;
   background-color: white;
+  position: relative; /* Added to position the widget */
 
   @media (max-width: 1200px) {
     flex-wrap: wrap;
@@ -96,47 +99,91 @@ const WelcomeStyles = styled(motion.div)`
       width: 100%;
     }
   }
+
+  .chipp-chat-widget {
+    position: absolute;
+    right: 0;
+    bottom: 10px; /* Adjusted to bring the widget slightly upwards */
+    z-index: 1000;
+  }
+`;
+
+const SectionContainer = styled.div`
+  margin-left: 1rem; /* Adjust margin as needed */
+  margin-right: 1rem; /* Adjust margin as needed */
+  padding-right: 3rem; /* Adjust padding as needed */
 `;
 
 const Welcome = () => {
   const { heroPictureAnimation, titleAnimation, lineContainerAnimation, heroStagger } = useAnimations();
 
+  useEffect(() => {
+    const script1 = document.createElement("script");
+    script1.src = "https://storage.googleapis.com/chipp-chat-widget-assets/build/bundle.js";
+    script1.defer = true;
+    document.body.appendChild(script1);
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://storage.googleapis.com/chipp-chat-widget-assets/build/bundle.css";
+    document.head.appendChild(link);
+
+    window.CHIPP_APP_URL = "https://talentedai-15534.chipp.ai";
+    window.CHIPP_APP_ID = 15534;
+
+    return () => {
+      document.body.removeChild(script1);
+      document.head.removeChild(link);
+    };
+  }, []);
+
   return (
-    <WelcomeStyles variants={heroStagger} initial="hidden" animate="show">
-      <motion.div
-        variants={heroStagger}
-        initial="hidden"
-        animate="show"
-        className="welcome-description"
-      >
-        <motion.div className="title" variants={titleAnimation}>
-          <motion.div variants={lineContainerAnimation} className="hide">
-            <motion.h2 variants={titleAnimation}>
-              Connecting Talent with Opportunities through <span>Innovative Job Solutions</span>
-            </motion.h2>
+    <>
+      <SectionContainer>
+        <WelcomeStyles variants={heroStagger} initial="hidden" animate="show">
+          <motion.div
+            variants={heroStagger}
+            initial="hidden"
+            animate="show"
+            className="welcome-description"
+          >
+            <motion.div className="title" variants={titleAnimation}>
+              <motion.div variants={lineContainerAnimation} className="hide">
+                <motion.h2 variants={titleAnimation}>
+                  Connecting Talent with Opportunities through <span>Innovative Job Solutions</span>
+                </motion.h2>
+              </motion.div>
+              <motion.div variants={titleAnimation} className="subtitle">
+                <Typography variant="body1" style={{ fontSize: "1.5rem", color: "#666", textAlign: "center" }}>
+                  Discover your dream job and take the next step in your career with our platform. We streamline the hiring process for both candidates and recruiters, ensuring a seamless experience.
+                </Typography>
+              </motion.div>
+              <motion.div variants={titleAnimation}>
+                <button>Learn More</button>
+              </motion.div>
+            </motion.div>
           </motion.div>
-          <motion.div variants={titleAnimation} className="subtitle">
-            <Typography variant="body1" style={{ fontSize: "1.5rem", color: "#666", textAlign: "center" }}>
-              Discover your dream job and take the next step in your career with our platform. We streamline the hiring process for both candidates and recruiters, ensuring a seamless experience.
-            </Typography>
+          <motion.div
+            variants={heroPictureAnimation}
+            initial="hidden"
+            animate="show"
+            className="welcome-photo"
+          >
+            <img src="https://dotcom-react.netlify.app/static/media/Hero.8c3cc6ed.png" alt="Hero" />
           </motion.div>
-          <motion.div variants={titleAnimation}>
-            <button>Learn More</button>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-      <motion.div
-        variants={heroPictureAnimation}
-        initial="hidden"
-        animate="show"
-        className="welcome-photo"
-      >
-        <img src="https://dotcom-react.netlify.app/static/media/Hero.8c3cc6ed.png" alt="Hero" />
-      </motion.div>
-      <div className="welcome-photo-mobile">
-        <img src="https://dotcom-react.netlify.app/static/media/Hero.8c3cc6ed.png" alt="Hero" />
-      </div>
-    </WelcomeStyles>
+          <div className="welcome-photo-mobile">
+            <img src="https://dotcom-react.netlify.app/static/media/Hero.8c3cc6ed.png" alt="Hero" />
+          </div>
+          <div className="chipp-chat-widget"></div>
+        </WelcomeStyles>
+      </SectionContainer>
+      <SectionContainer>
+        <Services />
+      </SectionContainer>
+      <SectionContainer>
+        <Accordion />
+      </SectionContainer>
+    </>
   );
 };
 
