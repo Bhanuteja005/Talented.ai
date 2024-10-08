@@ -18,6 +18,7 @@ import MyJobs from "./component/recruiter/MyJobs";
 import RecruiterProfile from "./component/recruiter/Profile";
 import MessagePopup from "./lib/MessagePopup";
 import { userType } from "./lib/isAuth";
+
 const useStyles = makeStyles((theme) => ({
   body: {
     display: "flex",
@@ -40,6 +41,7 @@ function App() {
     severity: "",
     message: "",
   });
+
   return (
     <BrowserRouter>
       <SetPopupContext.Provider value={setPopup}>

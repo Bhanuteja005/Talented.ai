@@ -7,7 +7,7 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 import { motion, useAnimation } from "framer-motion";
 import React, { useState } from "react";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import styled from "styled-components";
 import { useAnimations } from "../Hooks/useAnimations";
 import isAuth, { userType } from "../lib/isAuth";
@@ -65,8 +65,6 @@ const Navbar = (props) => {
     controls.start("show");
   };
 
-
-
   const buttonVariants = {
     hidden: { opacity: 0, y: -20 },
     show: {
@@ -79,61 +77,65 @@ const Navbar = (props) => {
   };
 
   return (
-    <StyledAppBar position="fixed" onMouseEnter={handleMouseEnter} >
+    <StyledAppBar position="fixed" onMouseEnter={handleMouseEnter}>
       <Toolbar>
-        <Typography variant="h6" className={classes.title} style={{ fontFamily: 'Chillax, sans-serif', color: 'black' }}>
-          Talented.ai
-        </Typography>
-        <motion.div initial="hidden" animate={controls} variants={buttonVariants} style={{ display: 'flex' }}>
-          {isAuth() ? (
-            userType() === "recruiter" ? (
-              <>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/home")}>
-                  Home
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/addjob")}>
-                  Add Jobs
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/myjobs")}>
-                  My Jobs
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/employees")}>
-                  Employees
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/profile")}>
-                  Profile
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/logout")}>
-                  Logout
-                </StyledButton>
-              </>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Typography variant="h6" className={classes.title} style={{ fontFamily: 'Chillax, sans-serif', color: 'black' }}>
+            Talented.ai
+          </Typography>
+        </Link>
+        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+          <motion.div initial="hidden" animate={controls} variants={buttonVariants} style={{ display: 'flex' }}>
+            {isAuth() ? (
+              userType() === "recruiter" ? (
+                <>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/home")}>
+                    Home
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/addjob")}>
+                    Add Jobs
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/myjobs")}>
+                    My Jobs
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/employees")}>
+                    Employees
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/profile")}>
+                    Profile
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/logout")}>
+                    Logout
+                  </StyledButton>
+                </>
+              ) : (
+                <>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/home")}>
+                    Home
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/applications")}>
+                    Applications
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/profile")}>
+                    Profile
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/logout")}>
+                    Logout
+                  </StyledButton>
+                </>
+              )
             ) : (
               <>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/home")}>
-                  Home
+                <StyledButton variants={buttonVariants} onClick={() => handleClick("/login")}>
+                  Login
                 </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/applications")}>
-                  Applications
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/profile")}>
-                  Profile
-                </StyledButton>
-                <StyledButton variants={buttonVariants} onClick={() => handleClick("/logout")}>
-                  Logout
+                <StyledButton variants={buttonVariants} onClick={() => handleClick("/signup")}>
+                  Signup
                 </StyledButton>
               </>
-            )
-          ) : (
-            <>
-              <StyledButton variants={buttonVariants} onClick={() => handleClick("/login")}>
-                Login
-              </StyledButton>
-              <StyledButton variants={buttonVariants} onClick={() => handleClick("/signup")}>
-                Signup
-              </StyledButton>
-            </>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
+        </div>
       </Toolbar>
     </StyledAppBar>
   );
