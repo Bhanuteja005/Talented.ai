@@ -205,7 +205,7 @@ function JobAssistant() {
     setJobData(data);
 
     try {
-      const response = await fetch('http://localhost:4444/api/suggest-skills', {
+      const response = await fetch('https://talented-ai-api.vercel.app/api/suggest-skills', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
