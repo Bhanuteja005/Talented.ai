@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const passportConfig = require("./lib/passportConfig");
 const cors = require("cors");
+const axios = require("axios"); // For making HTTP requests to Gemini API
 require('dotenv').config(); // Import and configure dotenv
 
 // Set mongoose strictQuery option
@@ -23,12 +24,19 @@ mongoose
 const app = express();
 const port = process.env.PORT || 4444;
 
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(bodyParser.json()); // Support JSON-encoded request bodies
+app.use(bodyParser.urlencoded({ extended: true })); // Support URL-encoded request bodies
 
 // Setting up middlewares
+const allowedOrigins = ['https://talented-aii.vercel.app', 'http://localhost:3000'];
 app.use(cors({
-  origin: 'https://talented-aii.vercel.app', // Replace with your frontend's URL
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -44,6 +52,43 @@ app.use("/host", require("./routes/downloadRoutes"));
 // Route to indicate server is running
 app.get("/", (req, res) => {
   res.send("<h1>Server is running!</h1>");
+});
+
+// Job Skills Suggestion API Endpoint
+app.post("/api/suggest-skills", async (req, res) => {
+  const { jobTitle, company, location, jobType, description, skills } = req.body;
+
+  const prompt = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `Job Title: ${jobTitle}\nCompany: ${company}\nLocation: ${location}\nJob Type: ${jobType}\nDescription: ${description}\nSkills: ${skills}\nBased on the above job description, suggest some learning skills and learning paths that would be beneficial for a candidate applying for this job.`
+          }
+        ]
+      }
+    ]
+  };
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+      prompt,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    if (response.data && response.data.candidates && response.data.candidates[0].content && response.data.candidates[0].content.parts) {
+      const suggestedSkills = response.data.candidates[0].content.parts.map(part => part.text).join("\n");
+      res.json({ suggestedSkills });
+    } else {
+      console.log("No valid response structure found.");
+      res.status(500).json({ error: "No valid response from AI." });
+    }
+  } catch (error) {
+    console.error("Error generating content:", error);
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
 });
 
 // Error handling middleware

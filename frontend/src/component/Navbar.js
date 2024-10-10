@@ -119,6 +119,9 @@ const Navbar = (props) => {
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/profile")}>
                     Profile
                   </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/candidate")}>
+                    Candidate
+                  </StyledButton>
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/logout")}>
                     Logout
                   </StyledButton>

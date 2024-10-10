@@ -11,6 +11,7 @@ import Navbar from "./component/Navbar";
 import Profile from "./component/Profile";
 import Signup from "./component/Signup";
 import Welcome, { ErrorPage } from "./component/Welcome";
+import JobAssistant from "./component/agent";
 import AcceptedApplicants from "./component/recruiter/AcceptedApplicants";
 import CreateJobs from "./component/recruiter/CreateJobs";
 import JobApplications from "./component/recruiter/JobApplications";
@@ -87,6 +88,9 @@ function App() {
               </Route>
               <Route exact path="/employees">
                 <AcceptedApplicants />
+              </Route>
+              <Route exact path="/candidate">
+                <JobAssistant /> {/* Add the route for JobAssistant */}
               </Route>
               <Route>
                 <ErrorPage />
