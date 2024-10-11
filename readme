@@ -1,8 +1,4 @@
-Creating a proper README file for `Talented.ai` involves providing clear and detailed information for users or developers. Below is a suggested README structure for the project. You can adjust the details to match the exact features, technologies, and purposes of your project.
-
----
-
-# Talented.ai
+### Talented.ai
 
 **Talented.ai** is an AI-powered talent discovery platform designed to match individuals with the most suitable career paths based on their skills, interests, and potential. Using advanced machine learning algorithms, the platform helps users unlock their career potential by providing tailored recommendations, personalized career insights, and learning pathways to boost their success.
 
