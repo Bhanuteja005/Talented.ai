@@ -17,6 +17,7 @@ import CreateJobs from "./component/recruiter/CreateJobs";
 import JobApplications from "./component/recruiter/JobApplications";
 import MyJobs from "./component/recruiter/MyJobs";
 import RecruiterProfile from "./component/recruiter/Profile";
+import JobAssistantRecruiter from "./component/recruteragent"; // Corrected import
 import MessagePopup from "./lib/MessagePopup";
 import { userType } from "./lib/isAuth";
 
@@ -90,7 +91,10 @@ function App() {
                 <AcceptedApplicants />
               </Route>
               <Route exact path="/candidate">
-                <JobAssistant /> {/* Add the route for JobAssistant */}
+                <JobAssistant /> 
+              </Route>
+              <Route exact path="/recruiter">
+                <JobAssistantRecruiter /> 
               </Route>
               <Route>
                 <ErrorPage />

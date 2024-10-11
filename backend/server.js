@@ -71,6 +71,7 @@ app.post("/api/suggest-skills", async (req, res) => {
     ]
   };
 
+
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
@@ -90,7 +91,42 @@ app.post("/api/suggest-skills", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
+// Recruiter Agent API Endpoint
+app.post("/api/suggest-candidate", async (req, res) => {
+  const { companyDescription, candidateInfo, jobDescription } = req.body;
 
+  const prompt = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `Company Description: ${companyDescription}\nCandidate Information: ${candidateInfo}\nJob Description: ${jobDescription}\nBased on the above information, evaluate if the candidate matches the job description and provide the pros and cons of this match.`
+          }
+        ]
+      }
+    ]
+  };
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+      prompt,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    if (response.data && response.data.candidates && response.data.candidates[0].content && response.data.candidates[0].content.parts) {
+      const evaluation = response.data.candidates[0].content.parts.map(part => part.text).join("\n");
+      res.json({ evaluation });
+    } else {
+      console.log("No valid response structure found.");
+      res.status(500).json({ error: "No valid response from AI." });
+    }
+  } catch (error) {
+    console.error("Error generating content:", error);
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+});
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);

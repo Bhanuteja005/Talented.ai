@@ -100,18 +100,15 @@ const useStyles = makeStyles({
 
 const JobForm = ({ onSubmit }) => {
   const classes = useStyles();
-  const [jobTitle, setJobTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [skills, setSkills] = useState("");
-  const [description, setDescription] = useState("");
+  const [companyDescription, setCompanyDescription] = useState("");
+  const [candidateInfo, setCandidateInfo] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
 
   const handleSubmit = () => {
-    const sanitizedDescription = sanitizeHtml(description);
     const jobData = {
-      jobTitle,
-      company,
-      skills,
-      description: sanitizedDescription,
+      companyDescription,
+      candidateInfo,
+      jobDescription,
     };
     onSubmit(jobData);
   };
@@ -119,55 +116,41 @@ const JobForm = ({ onSubmit }) => {
   return (
     <div className={classes.formContainer}>
       <div className={classes.innerContainer}>
-        <div className={classes.title}>Job Hiring Assistant</div>
+        <div className={classes.title}>Job Hiring Agent</div>
         <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="jobTitle">
-            Job Title
-          </label>
-          <input
-            className={classes.input}
-            id="jobTitle"
-            type="text"
-            placeholder="Enter job title"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-          />
-        </div>
-        <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="company">
-            Company
-          </label>
-          <input
-            className={classes.input}
-            id="company"
-            type="text"
-            placeholder="Enter company name"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-          />
-        </div>
-        <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="skills">
-            Job Skills
+          <label className={classes.label} htmlFor="companyDescription">
+            Company Description
           </label>
           <textarea
             className={classes.input}
-            id="skills"
-            placeholder="Enter job skills"
-            value={skills}
-            onChange={(e) => setSkills(e.target.value)}
+            id="companyDescription"
+            placeholder="Enter company description"
+            value={companyDescription}
+            onChange={(e) => setCompanyDescription(e.target.value)}
           />
         </div>
         <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="description">
+          <label className={classes.label} htmlFor="candidateInfo">
+            Candidate Information
+          </label>
+          <textarea
+            className={classes.input}
+            id="candidateInfo"
+            placeholder="Enter candidate information"
+            value={candidateInfo}
+            onChange={(e) => setCandidateInfo(e.target.value)}
+          />
+        </div>
+        <div className={classes.formGroup}>
+          <label className={classes.label} htmlFor="jobDescription">
             Job Description
           </label>
           <textarea
             className={classes.input}
-            id="description"
+            id="jobDescription"
             placeholder="Enter job description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
           />
         </div>
         <div className={classes.buttonContainer}>
@@ -206,7 +189,7 @@ function JobAssistant() {
     setJobData(data);
 
     try {
-      const response = await fetch('https://talented-ai-api.vercel.app/api/suggest-skills', {
+      const response = await fetch('https://talented-ai-api.vercel.app/api/suggest-candidate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -219,23 +202,24 @@ function JobAssistant() {
       }
 
       const result = await response.json();
-      const sanitizedSkills = sanitizeHtml(result.suggestedSkills, {
-        allowedTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em'],
-        allowedAttributes: {}
-      });
-      setJobText(sanitizedSkills);
+      setJobText(result.evaluation);
     } catch (error) {
-      console.error('Error generating suggested skills:', error);
-      setError('Failed to generate suggested skills. Please try again.');
+      console.error('Error generating evaluation:', error);
+      setError('Failed to generate evaluation. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const sanitizedText = sanitizeHtml(jobText, {
+    allowedTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em'],
+    allowedAttributes: {}
+  });
+
   return (
     <div className={classes.container}>
       <Typography variant="h2" align="center" style={{ fontFamily: "Chillax-semibold, sans-serif" }}>
-        Learning Agent
+        Recruiter Agent
       </Typography>
       <div className={classes.contentContainer}>
         <JobForm onSubmit={onSubmit} />
@@ -248,7 +232,7 @@ function JobAssistant() {
           ) : (
             <div>
               {error && <div className={classes.errorMessage}>{error}</div>}
-              <div dangerouslySetInnerHTML={{ __html: jobText }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizedText }} />
             </div>
           )}
         </div>
