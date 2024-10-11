@@ -136,7 +136,6 @@ The Talented.ai platform provides a set of RESTful API endpoints. Below is an ov
 - **GET /api/skill-suggestion**: Get the latest trends in specific careers.
 
 
-For more details on API endpoints and request parameters, please refer to the [API documentation](API_DOCS.md).
 
 ---
 
@@ -178,7 +177,6 @@ We welcome contributions from the community! To get started, follow these steps:
    ```
 5. Create a pull request to the main repository.
 
-For more details on contributing, please refer to our [Contributing Guidelines](CONTRIBUTING.md).
 
 ---
 
