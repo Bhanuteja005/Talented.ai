@@ -13,8 +13,6 @@
 - [API Documentation](#api-documentation)
 - [Tech Stack](#tech-stack)
 - [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
 
 ---
 
