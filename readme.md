@@ -83,7 +83,6 @@ Ensure MongoDB is installed and running on your local machine or use a cloud-hos
 
 ```bash
 MONGO_URI=<your-mongo-database-connection-string>
-JWT_SECRET=<your-secret-key>
 PORT=4444
 ```
 

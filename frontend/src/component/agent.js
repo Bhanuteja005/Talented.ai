@@ -119,7 +119,7 @@ const JobForm = ({ onSubmit }) => {
   return (
     <div className={classes.formContainer}>
       <div className={classes.innerContainer}>
-        <div className={classes.title}>Job Hiring Assistant</div>
+        <div className={classes.title}>Job Skills Assistant</div>
         <div className={classes.formGroup}>
           <label className={classes.label} htmlFor="jobTitle">
             Job Title

@@ -12,6 +12,7 @@ import Profile from "./component/Profile";
 import Signup from "./component/Signup";
 import Welcome, { ErrorPage } from "./component/Welcome";
 import JobAssistant from "./component/agent";
+import InterviewAssistant from "./component/ai-interview";
 import AcceptedApplicants from "./component/recruiter/AcceptedApplicants";
 import CreateJobs from "./component/recruiter/CreateJobs";
 import JobApplications from "./component/recruiter/JobApplications";
@@ -92,6 +93,9 @@ function App() {
               </Route>
               <Route exact path="/candidate">
                 <JobAssistant /> 
+              </Route>
+              <Route exact path="/ai-interview">
+                <InterviewAssistant /> 
               </Route>
               <Route exact path="/recruiter">
                 <JobAssistantRecruiter /> 

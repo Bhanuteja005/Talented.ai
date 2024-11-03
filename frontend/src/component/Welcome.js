@@ -2,10 +2,10 @@ import { Typography } from "@material-ui/core";
 import { motion } from "framer-motion";
 import React, { useEffect } from "react";
 import styled from "styled-components";
+import Hero from "../assets/Hero.png";
 import { useAnimations } from "../Hooks/useAnimations";
 import { Accordion } from "./query";
 import { Services } from "./services";
-
 // Styled components for the layout
 const WelcomeStyles = styled(motion.div)`
   min-height: 90vh;
@@ -169,10 +169,10 @@ const Welcome = () => {
             animate="show"
             className="welcome-photo"
           >
-            <img src="https://dotcom-react.netlify.app/static/media/Hero.8c3cc6ed.png" alt="Hero" />
+            <img src={Hero} alt="Hero" />
           </motion.div>
           <div className="welcome-photo-mobile">
-            <img src="https://dotcom-react.netlify.app/static/media/Hero.8c3cc6ed.png" alt="Hero" />
+            <img src={Hero} alt="Hero" />
           </div>
           <div className="chipp-chat-widget"></div>
         </WelcomeStyles>

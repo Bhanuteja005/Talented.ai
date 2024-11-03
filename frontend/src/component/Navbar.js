@@ -122,6 +122,9 @@ const Navbar = (props) => {
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/profile")}>
                     Profile
                   </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/ai-interview")}>
+                    Mock-Interview
+                  </StyledButton>
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/candidate")}>
                     Candidate
                   </StyledButton>

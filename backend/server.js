@@ -5,7 +5,28 @@ const passportConfig = require("./lib/passportConfig");
 const cors = require("cors");
 const axios = require("axios"); // For making HTTP requests to Gemini API
 require('dotenv').config(); // Import and configure dotenv
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 
+// Rate limiter
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+
+// Validation middleware
+const validateInterviewQuestion = [
+  body('jobTitle').trim().notEmpty().escape(),
+  body('skills').trim().notEmpty().escape(),
+  body('experience').isInt({ min: 0, max: 50 }),
+  body('currentQuestion').isInt({ min: 0 })
+];
+
+const validateAnswer = [
+  body('question').trim().notEmpty().escape(),
+  body('expectedAnswer').trim().notEmpty().escape(),
+  body('userAnswer').trim().notEmpty().escape()
+];
 // Set mongoose strictQuery option
 mongoose.set('strictQuery', true);
 
@@ -126,6 +147,195 @@ app.post("/api/suggest-candidate", async (req, res) => {
     console.error("Error generating content:", error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
+});
+// Interview Question Generation API Endpoint
+app.post("/api/get-interview-question", 
+  apiLimiter,
+  validateInterviewQuestion,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { jobTitle, skills, experience, currentQuestion } = req.body;
+
+      const prompt = {
+        contents: [
+          {
+            role: "user", 
+            parts: [
+              {
+                text: `You are a technical interviewer for a ${jobTitle} position.
+                Generate a unique technical interview question (do not repeat previous questions).
+                
+                Job Details:
+                - Required Skills: ${skills}
+                - Experience Level: ${experience} years
+                - Question Number: ${currentQuestion + 1}
+                - Previous Questions: ${JSON.stringify(messages.filter(m => m.type === 'ai').map(m => m.content))}
+                
+                Focus Areas:
+                - Core ${jobTitle} concepts
+                - Problem-solving abilities
+                - Best practices and design patterns
+                - Real-world scenarios
+                
+                Return strictly in this JSON format:
+                {
+                  "question": "detailed technical question",
+                  "expectedAnswer": "comprehensive model answer",
+                  "difficulty": "beginner|intermediate|advanced",
+                  "category": "concept|coding|design|problem-solving",
+                  "skillsTested": ["skill1", "skill2"]
+                }`
+              }
+            ]
+          }
+        ]
+      };
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+        prompt,
+        { 
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000
+        }
+      );
+
+      if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid AI response structure');
+      }
+
+      // Clean the response text
+      let responseText = response.data.candidates[0].content.parts[0].text;
+      // Remove markdown code blocks if present
+      responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      // Remove any leading/trailing whitespace
+      responseText = responseText.trim();
+
+      try {
+        const result = JSON.parse(responseText);
+        res.json(result);
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError);
+        console.log("Raw Response:", responseText);
+        res.status(500).json({ 
+          error: "Failed to parse AI response",
+          details: parseError.message
+        });
+      }
+
+    } catch (error) {
+      console.error("Error generating question:", error);
+      res.status(500).json({ 
+        error: "Failed to generate interview question",
+        details: error.message
+      });
+    }
+});
+// Answer Evaluation API Endpoint
+app.post("/api/evaluate-answer",
+  apiLimiter,
+  validateAnswer,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { question, expectedAnswer, userAnswer } = req.body;
+
+      const prompt = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `You are an interview evaluator. Compare the candidate's answer with the expected answer and provide a score and feedback.
+                
+                Question: ${question}
+                Expected Answer: ${expectedAnswer}
+                Candidate's Answer: ${userAnswer}
+                
+                Evaluate the answer based on:
+                1. Accuracy of technical concepts (40 points)
+                2. Completeness of answer (30 points)
+                3. Clear explanation (30 points)
+                
+                Respond strictly in this JSON format without any markdown or additional text:
+                {
+                  "score": <number between 0-100>,
+                  "feedback": "<specific feedback on the answer>",
+                  "strengths": ["<specific strength>", "<specific strength>"],
+                  "improvements": ["<specific improvement>", "<specific improvement>"],
+                  "accuracy": "<percentage> match"
+                }`
+              }
+            ]
+          }
+        ]
+      };
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+        prompt,
+        { 
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000
+        }
+      );
+
+      if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid AI response structure');
+      }
+
+      // Clean the response text
+      let responseText = response.data.candidates[0].content.parts[0].text;
+      // Remove any markdown formatting
+      responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      // Remove any leading/trailing whitespace
+      responseText = responseText.trim();
+
+      try {
+        const result = JSON.parse(responseText);
+        
+        // Ensure score is a number between 0-100
+        result.score = Math.min(Math.max(parseInt(result.score) || 0, 0), 100);
+        
+        // Ensure other required fields exist
+        result.feedback = result.feedback || 'No feedback provided';
+        result.strengths = Array.isArray(result.strengths) ? result.strengths : [];
+        result.improvements = Array.isArray(result.improvements) ? result.improvements : [];
+        result.accuracy = result.accuracy || '0%';
+
+        res.json(result);
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError);
+        console.log("Raw Response:", responseText);
+        res.status(500).json({ 
+          error: "Failed to parse evaluation",
+          score: 0,
+          feedback: "Error evaluating answer",
+          strengths: [],
+          improvements: ["Unable to evaluate answer properly"],
+          accuracy: "0%"
+        });
+      }
+
+    } catch (error) {
+      console.error("Error evaluating answer:", error);
+      res.status(500).json({ 
+        error: "Failed to evaluate answer",
+        score: 0,
+        feedback: "Error processing answer",
+        strengths: [],
+        improvements: ["System error occurred"],
+        accuracy: "0%"
+      });
+    }
 });
 // Error handling middleware
 app.use((err, req, res, next) => {
