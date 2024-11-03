@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { Redirect } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { SetPopupContext } from "../App";
 
@@ -14,7 +14,7 @@ const Logout = (props) => {
       message: "Logged out successfully",
     });
   }, [setPopup]);
-  return <Redirect to="/login" />;
+  return <Navigate to="/login" />;
 };
 
 export default Logout;

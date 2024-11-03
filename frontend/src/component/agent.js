@@ -1,7 +1,7 @@
 import { Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import React, { useEffect, useState } from "react";
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import sanitizeHtml from 'sanitize-html';
 
 const useStyles = makeStyles({
@@ -190,14 +190,14 @@ function JobAssistant() {
   const [jobText, setJobText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      history.push("/login");
+      navigate("/login");
     }
-  }, [history]);
+  }, [navigate]);
 
   const onSubmit = async (data) => {
     setLoading(true);

@@ -7,7 +7,7 @@ import {
 } from "@material-ui/core";
 import axios from "axios";
 import { useContext, useState } from "react";
-import { Redirect } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { SetPopupContext } from "../App";
 import EmailInput from "../lib/EmailInput";
@@ -103,7 +103,7 @@ const Login = (props) => {
   };
 
   return loggedin ? (
-    <Redirect to="/" />
+    <Navigate to="/" replace={true} />
   ) : (
     <Paper elevation={3} className={classes.body}>
       <Grid container direction="column" spacing={4} alignItems="center">

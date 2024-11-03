@@ -1,6 +1,6 @@
 import { Grid, makeStyles } from "@material-ui/core";
 import { createContext, useState } from "react";
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Applications from "./component/Applications";
 import { Footer } from "./component/Footer";
@@ -19,9 +19,9 @@ import JobApplications from "./component/recruiter/JobApplications";
 import MyJobs from "./component/recruiter/MyJobs";
 import RecruiterProfile from "./component/recruiter/Profile";
 import JobAssistantRecruiter from "./component/recruteragent"; // Corrected import
+import ResumeBuilder from "./component/resume";
 import MessagePopup from "./lib/MessagePopup";
 import { userType } from "./lib/isAuth";
-
 const useStyles = makeStyles((theme) => ({
   body: {
     display: "flex",
@@ -53,57 +53,27 @@ function App() {
             <Navbar />
           </Grid>
           <Grid item className={classes.body}>
-            <Switch>
-              <Route exact path="/">
-                <Welcome />
-              </Route>
-              <Route exact path="/login">
-                <Login />
-              </Route>
-              <Route exact path="/signup">
-                <Signup />
-              </Route>
-              <Route exact path="/logout">
-                <Logout />
-              </Route>
-              <Route exact path="/home">
-                <Home />
-              </Route>
-              <Route exact path="/applications">
-                <Applications />
-              </Route>
-              <Route exact path="/profile">
-                {userType() === "recruiter" ? (
-                  <RecruiterProfile />
-                ) : (
-                  <Profile />
-                )}
-              </Route>
-              <Route exact path="/addjob">
-                <CreateJobs />
-              </Route>
-              <Route exact path="/myjobs">
-                <MyJobs />
-              </Route>
-              <Route exact path="/job/applications/:jobId">
-                <JobApplications />
-              </Route>
-              <Route exact path="/employees">
-                <AcceptedApplicants />
-              </Route>
-              <Route exact path="/candidate">
-                <JobAssistant /> 
-              </Route>
-              <Route exact path="/ai-interview">
-                <InterviewAssistant /> 
-              </Route>
-              <Route exact path="/recruiter">
-                <JobAssistantRecruiter /> 
-              </Route>
-              <Route>
-                <ErrorPage />
-              </Route>
-            </Switch>
+            <Routes>
+              <Route path="/" element={<Welcome />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/logout" element={<Logout />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/applications" element={<Applications />} />
+              <Route 
+                path="/profile" 
+                element={userType() === "recruiter" ? <RecruiterProfile /> : <Profile />} 
+              />
+              <Route path="/addjob" element={<CreateJobs />} />
+              <Route path="/myjobs" element={<MyJobs />} />
+              <Route path="/job/applications/:jobId" element={<JobApplications />} />
+              <Route path="/employees" element={<AcceptedApplicants />} />
+              <Route path="/candidate" element={<JobAssistant />} />
+              <Route path="/ai-interview" element={<InterviewAssistant />} />
+              <Route path="/resume" element={<ResumeBuilder />} />
+              <Route path="/recruiter" element={<JobAssistantRecruiter />} />
+              <Route path="*" element={<ErrorPage />} />
+            </Routes>
           </Grid>
           <Grid item xs>
             <Footer />

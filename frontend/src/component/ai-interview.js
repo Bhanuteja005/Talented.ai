@@ -2,7 +2,7 @@ import { Avatar, CircularProgress, Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Android, Person } from '@material-ui/icons';
 import React, { useState } from "react";
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const useStyles = makeStyles({
   container: {
@@ -302,7 +302,7 @@ const [answeredQuestions, setAnsweredQuestions] = useState(0);
       experience: ''
     });
     const [currentQuestionData, setCurrentQuestionData] = useState(null);
-    const history = useHistory();
+    const navigate = useNavigate();
   
     const startInterview = async (data) => {
       setJobDetails(data); // Store job details

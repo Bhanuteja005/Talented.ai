@@ -21,7 +21,7 @@ import SearchIcon from "@material-ui/icons/Search";
 import Rating from "@material-ui/lab/Rating";
 import axios from "axios";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 import { SetPopupContext } from "../../App";
 
@@ -69,7 +69,7 @@ const useStyles = makeStyles((theme) => ({
 
 const JobTile = (props) => {
   const classes = useStyles();
-  let history = useHistory();
+  const navigate = useNavigate();
   const { job, getData } = props;
   const setPopup = useContext(SetPopupContext);
 
@@ -87,7 +87,7 @@ const JobTile = (props) => {
   };
 
   const handleClick = (location) => {
-    history.push(location);
+    navigate(location);
   };
 
   const handleClose = () => {

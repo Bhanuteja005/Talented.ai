@@ -7,7 +7,7 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 import { motion, useAnimation } from "framer-motion";
 import React, { useState } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useAnimations } from "../Hooks/useAnimations";
 import isAuth, { userType } from "../lib/isAuth";
@@ -50,14 +50,14 @@ const StyledButton = styled(motion(Button))`
 
 const Navbar = (props) => {
   const classes = useStyles();
-  let history = useHistory();
+  const navigate = useNavigate();
   const controls = useAnimation();
   const { staggerChildrenAnimation } = useAnimations();
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = (location) => {
     console.log(location);
-    history.push(location);
+    navigate(location);
   };
 
   const handleMouseEnter = () => {
@@ -123,10 +123,13 @@ const Navbar = (props) => {
                     Profile
                   </StyledButton>
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/ai-interview")}>
-                    Mock-Interview
+                    Mock Interview
+                  </StyledButton>
+                  <StyledButton variants={buttonVariants} onClick={() => handleClick("/resume")}>
+                    Resume Builder
                   </StyledButton>
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/candidate")}>
-                    Candidate
+                    learning agent
                   </StyledButton>
                   <StyledButton variants={buttonVariants} onClick={() => handleClick("/logout")}>
                     Logout

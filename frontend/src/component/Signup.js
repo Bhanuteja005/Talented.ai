@@ -14,7 +14,7 @@ import ChipInput from "material-ui-chip-input";
 import { useContext, useState } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
-import { Redirect } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { SetPopupContext } from "../App";
 import EmailInput from "../lib/EmailInput";
@@ -320,7 +320,7 @@ const Login = (props) => {
   };
 
   return loggedin ? (
-    <Redirect to="/" />
+    <Navigate to="/" replace={true}/>
   ) : (
     <Paper elevation={3} className={classes.body}>
       <Grid container direction="column" spacing={4} alignItems="center">
