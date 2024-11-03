@@ -164,37 +164,26 @@ app.post("/api/get-interview-question",
       const prompt = {
         contents: [
           {
-            role: "user", 
+            role: "user",
             parts: [
               {
-                text: `You are a technical interviewer for a ${jobTitle} position.
-                Generate a unique technical interview question (do not repeat previous questions).
-                
-                Job Details:
-                - Required Skills: ${skills}
-                - Experience Level: ${experience} years
-                - Question Number: ${currentQuestion + 1}
-                - Previous Questions: ${JSON.stringify(messages.filter(m => m.type === 'ai').map(m => m.content))}
-                
-                Focus Areas:
-                - Core ${jobTitle} concepts
-                - Problem-solving abilities
-                - Best practices and design patterns
-                - Real-world scenarios
-                
-                Return strictly in this JSON format:
+                text: `Generate a technical interview question as if an interviewer is asking, based on the job title and required skills. Ensure that questions are directly relevant to the job role and related skills, and that no questions repeat:
+                Job Title: ${jobTitle}
+                Required Skills: ${skills}
+                Experience Level: ${experience} years
+                Question Number: ${currentQuestion + 1}
+        
                 {
                   "question": "detailed technical question",
                   "expectedAnswer": "comprehensive model answer",
-                  "difficulty": "beginner|intermediate|advanced",
-                  "category": "concept|coding|design|problem-solving",
-                  "skillsTested": ["skill1", "skill2"]
+                  "difficulty": "beginner"
                 }`
               }
             ]
           }
-        ]
+        ]        
       };
+
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
         prompt,
