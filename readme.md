@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/logo.png" alt="Talented.ai Logo" width="200"/>
+  <img src="frontend/public/l.png" alt="Talented.ai Logo" width="200"/>
 
   # Talented.ai 🚀
   > AI-Powered Career Discovery Platform
@@ -16,7 +16,7 @@ Check out our platform in action:
 
 <div align="center">
   <a href="https://flonnect.com/video/5379d244bbbf-489e-8e9a-41d5f82addaa">
-    <img src="docs/screenshots/video-thumbnail.png" alt="Demo Video" width="600"/>
+    <img src="frontend/public/l.png" alt="Demo Video" width="600"/>
   </a>
 </div>
 
