@@ -1,82 +1,52 @@
-### Talented.ai
+<div align="center">
+  <img src="frontend/public/logo.png" alt="Talented.ai Logo" width="200"/>
 
-**Talented.ai** is an AI-powered talent discovery platform designed to match individuals with the most suitable career paths based on their skills, interests, and potential. Using advanced machine learning algorithms, the platform helps users unlock their career potential by providing tailored recommendations, personalized career insights, and learning pathways to boost their success.
+  # Talented.ai 🚀
+  > AI-Powered Career Discovery Platform
 
----
+  [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+  [![React](https://img.shields.io/badge/React-18.0.0-blue.svg)](https://reactjs.org/)
+  [![Node.js](https://img.shields.io/badge/Node.js-14.0.0-green.svg)](https://nodejs.org/)
 
-## Table of Contents
+  [Live Demo](https://talented-ai.vercel.app/) | [Documentation](docs/README.md) | [Report Bug](issues/new)
+</div>
 
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Documentation](#api-documentation)
-- [Tech Stack](#tech-stack)
-- [Contributing](#contributing)
+## 🎥 Demo Video
+Check out our platform in action:
 
----
+<div align="center">
+  <a href="https://flonnect.com/video/5379d244bbbf-489e-8e9a-41d5f82addaa">
+    <img src="docs/screenshots/video-thumbnail.png" alt="Demo Video" width="600"/>
+  </a>
+</div>
 
-## Features
+## ✨ Key Features
 
-- **AI-Powered Career Recommendations**: Get personalized career advice based on your skills, personality, and interests.
-- **Talent Profiling**: Analyze user profiles to match them with relevant career paths and job opportunities.
-- **Skill Assessment & Learning Paths**: Personalized learning suggestions to help users acquire the necessary skills for their career goals.
-- **Career Insights**: In-depth career insights and future trends for different industries and roles.
-- **Real-Time Analytics**: AI-driven analysis of users' profiles, skills, and job market data.
+🤖 **AI-Powered Matching**
+- Smart career recommendations
+- Real-time skill gap analysis
+- Personalized learning paths
 
----
+👥 **Smart Profiling**
+- Comprehensive skill assessment
+- Career compatibility scoring
+- Industry insights
 
-## Getting Started
-
-To get started with Talented.ai, follow the steps below.
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm (v6 or higher) or yarn
-- MongoDB (for the database)
-- Python (for AI models, if required)
-
-### Installation
-
-Clone the repository to your local machine:
+## 🚀 Quick Setup
 
 ```bash
+# Clone repository
 git clone https://github.com/Bhanuteja005/Talented.ai.git
-```
 
-Navigate to the project directory:
+# Install frontend dependencies
+cd frontend && npm install
 
-```bash
-cd talented-ai
-```
+# Install backend dependencies
+cd ../backend && npm install
 
-Install the necessary dependencies in frontend:
+# Start application
+npm start
 
-```bash
-cd frontend
-npm install
-```
-
-If you are using yarn, run:
-
-```bash
-cd frontend
-yarn install
-```
-Install the necessary dependencies in backend:
-
-```bash
-cd backend
-npm install
-```
-
-If you are using yarn, run:
-
-```bash
-cd backend
-yarn install
-```
 ### Database Setup
 
 Ensure MongoDB is installed and running on your local machine or use a cloud-hosted MongoDB service like MongoDB Atlas. Configure your `.env` file with the following environment variables:
@@ -93,26 +63,6 @@ If Talented.ai requires external API integrations (for example, AI/ML APIs), mak
 ```bash
 GOOGLE_API_KEY=<your-gemini-api-key>
 ```
-
----
-
-## Usage
-
-### Running the Application
-
-To start the application locally, run:
-
-```bash
-cd frontend
-npm start
-```
-
-The server will start on `http://localhost:4444`.
-
-### Frontend
-
-You can access the frontend of Talented.ai at `http://localhost:3000` once the client has been set up. If you haven't set up the frontend yet, refer to the documentation in the frontend folder.
-
 ---
 
 ## API Documentation
@@ -141,41 +91,18 @@ The Talented.ai platform provides a set of RESTful API endpoints. Below is an ov
 ## Tech Stack
 
 **Frontend**:
-- React.js
-- Bootstrap
+- ⚛️ React.js
+- 🎨 Material-UI
+- 📊 Chart.js
 
-**Backend**:
-- Node.js
-- Express.js
-- MongoDB (Database)
-- JWT (Authentication)
-
-**Other Tools**:
-- Docker (for containerization)
-- AWS/GCP/Azure (for deployment)
-- Vercel (for frontend deployment)
+**Backend**
+- 🟢 Node.js
+- 🚂 Express.js
+- 🍃 MongoDB
+- 🔒 JWT
 
 ---
 
-## Contributing
+## 📬 Contact
 
-We welcome contributions from the community! To get started, follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add your message here"
-   ```
-4. Push the branch to your forked repository:
-   ```bash
-   git push origin feature-name
-   ```
-5. Create a pull request to the main repository.
-
-
----
-
+- Project Link: https://github.com/Bhanuteja005/Talented.ai
