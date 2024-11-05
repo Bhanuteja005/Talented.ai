@@ -27,13 +27,51 @@ import isAuth from "../lib/isAuth";
 const useStyles = makeStyles((theme) => ({
   body: {
     padding: "60px 60px",
+    [theme.breakpoints.down('sm')]: {
+      padding: '20px',
+      margin: '10px',
+      width: '80%',
+      maxWidth: '450px'
+    }
   },
   inputBox: {
     width: "400px",
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      minWidth: '250px',
+      maxWidth: '100%'
+    }
   },
   submitButton: {
     width: "400px",
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      minWidth: '250px',
+      maxWidth: '100%'
+    }
   },
+  title: {
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '2rem'
+    }
+  },
+  educationContainer: {
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+      '& .MuiGrid-item': {
+        width: '100%',
+        marginBottom: theme.spacing(2)
+      }
+    }
+  },
+  bioInput: {
+    width: '100%',
+    maxWidth: '400px',
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      maxWidth: '350px'
+    }
+  }
 }));
 
 const MultifieldInput = (props) => {
@@ -46,12 +84,13 @@ const MultifieldInput = (props) => {
         <Grid
           item
           container
-          className={classes.inputBox}
+          className={`${classes.inputBox} ${classes.educationContainer}`}
           key={key}
-          style={{ paddingLeft: 0, paddingRight: 0 }}
+          spacing={2}
         >
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             <TextField
+              fullWidth
               label={`Institution Name #${key + 1}`}
               value={education[key].institutionName}
               onChange={(event) => {
@@ -62,8 +101,9 @@ const MultifieldInput = (props) => {
               variant="outlined"
             />
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={12} sm={3}>
             <TextField
+              fullWidth
               label="Start Year"
               value={obj.startYear}
               variant="outlined"
@@ -75,8 +115,9 @@ const MultifieldInput = (props) => {
               }}
             />
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={12} sm={3}>
             <TextField
+              fullWidth
               label="End Year"
               value={obj.endYear}
               variant="outlined"
@@ -90,29 +131,9 @@ const MultifieldInput = (props) => {
           </Grid>
         </Grid>
       ))}
-      <Grid item>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() =>
-            setEducation([
-              ...education,
-              {
-                institutionName: "",
-                startYear: "",
-                endYear: "",
-              },
-            ])
-          }
-          className={classes.inputBox}
-        >
-          Add another institution details
-        </Button>
-      </Grid>
     </>
   );
 };
-
 const Login = (props) => {
   const classes = useStyles();
   const setPopup = useContext(SetPopupContext);
@@ -445,31 +466,33 @@ const Login = (props) => {
         ) : (
           <>
             <Grid item style={{ width: "100%" }}>
-              <TextField
-                label="Bio (upto 250 words)"
-                multiline
-                rows={8}
-                style={{ width: "100%" }}
-                variant="outlined"
-                value={signupDetails.bio}
-                onChange={(event) => {
-                  if (
-                    event.target.value.split(" ").filter(function (n) {
-                      return n !== "";
-                    }).length <= 250
-                  ) {
-                    handleInput("bio", event.target.value);
-                  }
-                }}
-              />
+            <TextField
+  label="Bio (upto 250 words)"
+  multiline
+  minRows={8}
+  className={classes.bioInput}
+  variant="outlined"
+  value={signupDetails.bio}
+  onChange={(event) => {
+    if (
+      event.target.value.split(" ").filter(function (n) {
+        return n !== "";
+      }).length <= 250
+    ) {
+      handleInput("bio", event.target.value);
+    }
+  }}
+/>
             </Grid>
-            <Grid item>
-              <PhoneInput
-                country={"in"}
-                value={phone}
-                onChange={(phone) => setPhone(phone)}
-              />
-            </Grid>
+            <Grid item className={classes.inputBox}>
+  <PhoneInput
+    country={"in"}
+    value={phone}
+    onChange={(phone) => setPhone(phone)}
+    containerStyle={{ width: '100%' }}
+    inputStyle={{ width: '100%' }}
+  />
+</Grid>
           </>
         )}
 

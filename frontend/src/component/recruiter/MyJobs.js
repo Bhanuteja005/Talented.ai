@@ -822,34 +822,47 @@ const MyJobs = (props) => {
           <Grid item xs>
             <Typography variant="h2">My Jobs</Typography>
           </Grid>
-          <Grid item xs>
-            <TextField
-              label="Search Jobs"
-              value={searchOptions.query}
-              onChange={(event) =>
-                setSearchOptions({
-                  ...searchOptions,
-                  query: event.target.value,
-                })
-              }
-              onKeyPress={(ev) => {
-                if (ev.key === "Enter") {
-                  getData();
-                }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment>
-                    <IconButton onClick={() => getData()}>
-                      <SearchIcon />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              style={{ width: "500px" }}
-              variant="outlined"
-            />
-          </Grid>
+          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+  <TextField
+    label="Search Jobs"
+    value={searchOptions.query}
+    onChange={(event) =>
+      setSearchOptions({
+        ...searchOptions,
+        query: event.target.value,
+      })
+    }
+    onKeyPress={(ev) => {
+      if (ev.key === "Enter") {
+        getData();
+      }
+    }}
+    InputProps={{
+      endAdornment: (
+        <InputAdornment>
+          <IconButton 
+            onClick={() => getData()}
+            size="small"
+          >
+            <SearchIcon />
+          </IconButton>
+        </InputAdornment>
+      ),
+    }}
+    sx={{
+      width: {
+        xs: '95%',    // Mobile
+        sm: '800px',  // Tablet
+        md: '900px',  // Small Desktop
+        lg: '1000px', // Large Desktop
+      },
+      maxWidth: '1200px',
+      my: { xs: 1, sm: 2 }
+    }}
+    variant="outlined"
+    size="small"
+  />
+</Grid>
           <Grid item>
             <IconButton onClick={() => setFilterOpen(true)}>
               <FilterListIcon />

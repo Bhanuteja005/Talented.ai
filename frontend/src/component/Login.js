@@ -18,14 +18,35 @@ import isAuth from "../lib/isAuth";
 
 const useStyles = makeStyles((theme) => ({
   body: {
-    padding: "60px 60px",
+    padding: '60px 60px',
+    [theme.breakpoints.down('sm')]: {
+      padding: '20px',
+      margin: '10px',
+      width: '80%',
+      maxWidth: '450px'
+    }
   },
   inputBox: {
-    width: "300px",
+    width: '300px',
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      minWidth: '250px',
+      maxWidth: '100%'
+    }
   },
   submitButton: {
-    width: "300px",
+    width: '300px',
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      minWidth: '250px',
+      maxWidth: '100%'
+    }
   },
+  title: {
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '2rem'
+    }
+  }
 }));
 
 const Login = (props) => {
@@ -108,7 +129,7 @@ const Login = (props) => {
     <Paper elevation={3} className={classes.body}>
       <Grid container direction="column" spacing={4} alignItems="center">
         <Grid item>
-          <Typography variant="h3" component="h2">
+          <Typography variant="h3" component="h2" className={classes.title}>
             Login
           </Typography>
         </Grid>

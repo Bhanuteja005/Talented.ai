@@ -41,6 +41,10 @@ const useStyles = makeStyles((theme) => ({
     width: "90%",
     marginLeft: "auto",
     float: "right",
+    [theme.breakpoints.down('xs')]: {
+      padding: theme.spacing(1.5),
+      width: '100%'
+    }
   },
   button: {
     marginTop:'90px',
@@ -111,30 +115,56 @@ const JobTile = (props) => {
   const deadline = new Date(job.deadline).toLocaleDateString();
 
   return (
-    <Paper className={classes.jobTileOuter} elevation={3}>
-      <Grid container>
-        <Grid container item xs={9} spacing={1} direction="column">
-          <Grid item>
-            <Typography variant="h5">{job.title}</Typography>
-          </Grid>
-          <Grid item>
-            <Rating value={job.rating !== -1 ? job.rating : null} readOnly />
-          </Grid>
-          <Grid item>Role : {job.jobType}</Grid>
-          <Grid item>Salary : &#8377; {job.salary} per month</Grid>
-          <Grid item>
-            Duration :{" "}
-            {job.duration !== 0 ? `${job.duration} month` : `Flexible`}
-          </Grid>
-          <Grid item>Posted By : {job.recruiter.name}</Grid>
-          <Grid item>Application Deadline : {deadline}</Grid>
+    <Paper className={classes.jobTileOuter} elevation={3} >
+      <Grid container spacing={1}>
+      <Grid 
+      container 
+      item 
+      xs={12} 
+      md={9} 
+      spacing={1} 
+      direction="column"
+    >
+      <Grid item>
+        <Typography 
+          variant="h5"
+          sx={{
+            fontSize: {
+              xs: '1.2rem',
+              sm: '1.5rem'
+            }
+          }}
+        >
+          {job.title}
+        </Typography>
+      </Grid>
+      <Grid item>
+        <Rating value={job.rating !== -1 ? job.rating : null} readOnly />
+      </Grid>
+      <Grid item>Role : {job.jobType}</Grid>
+      <Grid item>Salary : &#8377; {job.salary} per month</Grid>
+      <Grid item>
+        Duration : {job.duration !== 0 ? `${job.duration} month` : `Flexible`}
+      </Grid>
+      <Grid item>Posted By : {job.recruiter.name}</Grid>
+      <Grid item>Application Deadline : {deadline}</Grid>
 
-          <Grid item>
-            {job.skillsets.map((skill) => (
-              <Chip label={skill} style={{ marginRight: "2px" }} />
-            ))}
-          </Grid>
-        </Grid>
+      <Grid item>
+        {job.skillsets.map((skill) => (
+          <Chip 
+            key={skill}
+            label={skill} 
+            sx={{ 
+              margin: '2px',
+              fontSize: {
+                xs: '0.75rem',
+                sm: '0.875rem'
+              }
+            }} 
+          />
+        ))}
+      </Grid>
+    </Grid>
         <Grid item xs={3}>
           <Button
             variant="contained"
@@ -641,51 +671,92 @@ const Home = (props) => {
   <Grid item xs={12}>
     <Typography variant="h2" style={{ fontFamily: 'Chillax-semibold, sans-serif', color: 'black', textAlign: 'center' }}>Jobs</Typography>
   </Grid>
-  <Grid item xs={3}>
-    <Paper style={{ padding: "20px", marginTop:"20px"}}>
-      <Typography variant="h6">Filter Options</Typography>
-      <Grid container direction="column" spacing={3}>
-        <Grid item>
-          <TextField
-            label="Search Jobs"
-            value={searchOptions.query}
-            onChange={(event) =>
-              setSearchOptions({
-                ...searchOptions,
-                query: event.target.value,
-              })
+  <Grid item xs={12} sm={6} md={3}>
+  <Paper 
+    sx={{
+      padding: {
+        xs: "12px",
+        sm: "20px"
+      },
+      marginTop: "20px",
+      marginBottom: {
+        xs: "16px",
+        sm: "0"
+      }
+    }}
+  >
+    <Typography 
+      variant="h6"
+      sx={{
+        fontSize: {
+          xs: '1rem',
+          sm: '1.25rem'
+        },
+        marginBottom: '12px'
+      }}
+    >
+      Filter Options
+    </Typography>
+    <Grid 
+      container 
+      direction="column" 
+      spacing={{
+        xs: 2,
+        sm: 3
+      }}
+    >
+      <Grid item>
+        <TextField
+          label="Search Jobs"
+          value={searchOptions.query}
+          onChange={(event) =>
+            setSearchOptions({
+              ...searchOptions,
+              query: event.target.value,
+            })
+          }
+          onKeyPress={(ev) => {
+            if (ev.key === "Enter") {
+              getData();
             }
-            onKeyPress={(ev) => {
-              if (ev.key === "Enter") {
-                getData();
-              }
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment>
-                  <IconButton onClick={() => getData()}>
-                    <SearchIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            variant="outlined"
-            fullWidth
-          />
-        </Grid>
-        <Grid item>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setFilterOpen(true)}
-            fullWidth
-          >
-            More Filters
-          </Button>
-        </Grid>
+          }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment>
+                <IconButton 
+                  onClick={() => getData()}
+                  size="small"
+                >
+                  <SearchIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          variant="outlined"
+          fullWidth
+          size="small"
+        />
       </Grid>
-    </Paper>
-  </Grid>
+      <Grid item>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setFilterOpen(true)}
+          fullWidth
+          size="small"
+          sx={{
+            padding: {
+              xs: '8px',
+              sm: '12px'
+            }
+          }}
+        >
+          More Filters
+        </Button>
+      </Grid>
+    </Grid>
+  </Paper>
+</Grid>
   <Grid item xs={9}>
     <Grid container direction="column" alignItems="center">
       <Grid item xs>

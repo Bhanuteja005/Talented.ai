@@ -1,6 +1,6 @@
 import { Typography } from "@material-ui/core";
 import { motion } from "framer-motion";
-import React, { useEffect } from "react";
+import React from "react";
 import styled from "styled-components";
 import Hero from "../assets/Hero.png";
 import { useAnimations } from "../Hooks/useAnimations";
@@ -117,7 +117,7 @@ const SectionContainer = styled.div`
 const Welcome = () => {
   const { heroPictureAnimation, titleAnimation, lineContainerAnimation, heroStagger } = useAnimations();
 
-  useEffect(() => {
+  {/*useEffect(() => {
     const script1 = document.createElement("script");
     script1.src = "https://storage.googleapis.com/chipp-chat-widget-assets/build/bundle.js";
     script1.defer = true;
@@ -135,7 +135,7 @@ const Welcome = () => {
       document.body.removeChild(script1);
       document.head.removeChild(link);
     };
-  }, []);
+  }, []);*/}
 
   return (
     <>
@@ -174,7 +174,7 @@ const Welcome = () => {
           <div className="welcome-photo-mobile">
             <img src={Hero} alt="Hero" />
           </div>
-          <div className="chipp-chat-widget"></div>
+          {/*<div className="chipp-chat-widget"></div>*/}
         </WelcomeStyles>
       </SectionContainer>
       <SectionContainer>

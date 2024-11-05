@@ -6,18 +6,10 @@
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.3",
     "@material-ui/lab": "^4.0.0-alpha.61",
-    "@radix-ui/react-collapsible": "^1.1.1",
-    "@radix-ui/react-dialog": "^1.1.2",
-    "@radix-ui/react-slot": "^1.1.0",
     "@testing-library/react": "^11.2.3",
-    "@testing-library/user-event": "^12.6.2",
     "axios": "^0.21.4",
-    "class-variance-authority": "^0.7.0",
-    "crewai": "^1.0.1",
     "framer-motion": "^4.1.17",
-    "lucide-react": "^0.454.0",
     "material-ui-chip-input": "^1.1.0",
-    "next-themes": "^0.3.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-intersection-observer": "^9.13.1",
@@ -26,13 +18,11 @@
     "react-scripts": "4.0.1",
     "react-to-print": "^3.0.2",
     "sanitize-html": "^2.13.1",
-    "sonner": "^1.6.1",
     "styled-components": "^6.1.13",
     "web-vitals": "^0.2.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.6",
-    "@babel/plugin-proposal-private-property-in-object": "^7.18.6",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "cross-env": "^7.0.3"
   },
   "scripts": {

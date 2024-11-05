@@ -4,87 +4,125 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import sanitizeHtml from 'sanitize-html';
 
-const useStyles = makeStyles({
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '2rem',
-    paddingTop: '10vh',
-  },
-  contentContainer: {
-    display: 'flex',
-    gap: '2rem',
-  },
-  formContainer: {
-    width: '500px',
-    height: '600px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '0.5rem',
-    overflow: 'hidden',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-  },
-  innerContainer: {
-    padding: '1.5rem',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: '1.25rem',
-    marginBottom: '0.5rem',
-  },
-  formGroup: {
-    marginBottom: '1rem',
-    paddingRight:'1rem'
-  },
-  label: {
-    display: 'block',
-    color: '#4a5568',
-    fontSize: '0.875rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
-  },
-  input: {
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e2e8f0',
-    borderRadius: '0.375rem',
-    width: '100%',
-    padding: '0.5rem 0.75rem',
-    color: '#4a5568',
-    lineHeight: '1.25',
-    '&:focus': {
-      outline: 'none',
-      boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
+  const useStyles = makeStyles(theme => ({
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '2rem',
+      padding: '5vh 1rem',
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
     },
-  },
-  buttonContainer: {
-    padding: '1.5rem',
-  },
-  button: {
-    backgroundColor: '#4299e1',
-    color: 'white',
-    fontWeight: 'bold',
-    padding: '0.5rem 1rem',
-    borderRadius: '0.375rem',
-    '&:hover': {
-      backgroundColor: '#2b6cb0',
+    contentContainer: {
+      display: 'flex',
+      gap: '2rem',
+      width: '100%',
+      maxWidth: '1200px',
+      '@media (max-width: 768px)': {
+        flexDirection: 'column',
+        gap: '1rem',
+      },
     },
-    '&:focus': {
-      outline: 'none',
-      boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
+    formContainer: {
+      width: '500px',
+      height: '600px',
+      border: '1px solid #e2e8f0',
+      borderRadius: '0.5rem',
+      overflow: 'hidden',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      '@media (max-width: 768px)': {
+        width: '100%',
+        height: 'auto',
+        minHeight: '500px',
+      },
     },
-  },
-  jobDescriptionContainer: {
-    width: '500px',
-    height: '570px',
-    fontSize: '0.75rem',
-    color: '#718096',
-    padding: '1rem',
-    border: '1px solid #e2e8f0',
-    borderRadius: '0.5rem',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-    whiteSpace: 'pre-line',
-    overflowY: 'auto',
-  },
+    innerContainer: {
+      padding: '1.5rem',
+      '@media (max-width: 768px)': {
+        padding: '1rem',
+      },
+    },
+    title: {
+      fontWeight: 'bold',
+      fontSize: '1.25rem',
+      marginBottom: '0.5rem',
+      '@media (max-width: 768px)': {
+        fontSize: '1.1rem',
+      },
+    },
+    formGroup: {
+      marginBottom: '1rem',
+      paddingRight: '1rem',
+      '@media (max-width: 768px)': {
+        paddingRight: '0',
+      },
+    },
+    label: {
+      display: 'block',
+      color: '#4a5568',
+      fontSize: '0.875rem',
+      fontWeight: 'bold',
+      marginBottom: '0.5rem',
+    },
+    input: {
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+      border: '1px solid #e2e8f0',
+      borderRadius: '0.375rem',
+      width: '100%',
+      padding: '0.5rem 0.75rem',
+      color: '#4a5568',
+      lineHeight: '1.25',
+      boxSizing: 'border-box',
+      '&:focus': {
+        outline: 'none',
+        boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
+      },
+    },
+    buttonContainer: {
+      padding: '1.5rem',
+      '@media (max-width: 768px)': {
+        padding: '1rem',
+      },
+    },
+    button: {
+      backgroundColor: '#4299e1',
+      color: 'white',
+      fontWeight: 'bold',
+      padding: '0.5rem 1rem',
+      borderRadius: '0.375rem',
+      width: '100%',
+      '&:hover': {
+        backgroundColor: '#2b6cb0',
+      },
+      '&:focus': {
+        outline: 'none',
+        boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
+      },
+    },
+    jobDescriptionContainer: {
+      width: '500px',
+      height: '570px',
+      fontSize: '0.75rem',
+      color: '#718096',
+      padding: '1rem',
+      border: '1px solid #e2e8f0',
+      borderRadius: '0.5rem',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      whiteSpace: 'pre-line',
+      overflowY: 'auto',
+      '@media (max-width: 768px)': {
+        width: '90%',
+        height: '400px',
+      },
+    },
+    pageTitle: {
+      fontFamily: "Chillax-semibold, sans-serif",
+      '@media (max-width: 768px)': {
+        fontSize: '1.75rem',
+      },
+    },
   loaderContainer: {
     display: 'flex',
     alignItems: 'center',
@@ -96,7 +134,7 @@ const useStyles = makeStyles({
     fontWeight: 'bold',
     marginTop: '1rem',
   },
-});
+}));
 
 const JobForm = ({ onSubmit }) => {
   const classes = useStyles();

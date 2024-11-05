@@ -1,21 +1,50 @@
 import { Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { createTheme, makeStyles } from '@material-ui/core/styles';
 import axios from "axios";
 import React, { useRef, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 
+// Create theme instance
+const theme = createTheme({
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
+});
 const useStyles = makeStyles({
   container: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '2rem',
-    paddingTop: '10vh',
+    paddingTop: '5vh',
+    width: '100%',
+    padding: '0 1rem',
+    [theme.breakpoints.down('sm')]: {
+      
+      paddingTop: '2vh',
+      gap: '1rem',
+    }
   },
   contentContainer: {
     display: 'flex',
     gap: '2rem',
+    width: '100%',
+    maxWidth: '1200px',
+    margin: '0 auto', // Add this for centering
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+      gap: '1rem',
+      padding: '0 15px',
+      width: '90%', // Add this for small screens
+      margin: '0 auto' // Reinforce centering on small screens
+    }
   },
   formContainer: {
     width: '500px',
@@ -24,20 +53,25 @@ const useStyles = makeStyles({
     borderRadius: '0.5rem',
     overflow: 'auto',
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    [theme.breakpoints.down('sm')]: {
+      width: '100%', 
+      height: 'auto',
+      maxHeight: '500px',
+      margin: '0 auto' // Add this for centering on small screens
+    }
   },
   innerContainer: {
     padding: '1.5rem',
+    [theme.breakpoints.down('sm')]: {
+      padding: '1rem',
+    }
   },
   formGroup: {
     marginBottom: '1rem',
-    paddingRight: '1rem'
-  },
-  label: {
-    display: 'block',
-    color: '#4a5568',
-    fontSize: '0.875rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
+    paddingRight: '1rem',
+    [theme.breakpoints.down('sm')]: {
+      paddingRight: '0',
+    }
   },
   input: {
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
@@ -48,10 +82,10 @@ const useStyles = makeStyles({
     '&:focus': {
       outline: 'none',
       boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
+    },
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '14px',
     }
-  },
-  fileInput: {
-    marginTop: '0.5rem',
   },
   button: {
     backgroundColor: '#4299e1',
@@ -61,20 +95,13 @@ const useStyles = makeStyles({
     borderRadius: '0.375rem',
     border: 'none',
     cursor: 'pointer',
+    width: '100%',
+    marginTop: '1rem',
     '&:hover': {
       backgroundColor: '#2b6cb0',
-    }
-  },
-  addButton: {
-    backgroundColor: '#48bb78',
-    '&:hover': {
-      backgroundColor: '#38a169',
-    }
-  },
-  deleteButton: {
-    backgroundColor: '#f56565',
-    '&:hover': {
-      backgroundColor: '#e53e3e',
+    },
+    [theme.breakpoints.down('sm')]: {
+      padding: '0.75rem',
     }
   },
   previewContainer: {
@@ -85,9 +112,32 @@ const useStyles = makeStyles({
     borderRadius: '0.5rem',
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
     overflowY: 'auto',
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      height: 'auto',
+      minHeight: '400px',
+      padding: '1rem',
+    }
   },
   companyList: {
     marginTop: '1rem',
+    [theme.breakpoints.down('sm')]: {
+      marginTop: '0.5rem',
+    }
+  },
+  title: {
+    fontSize: '2rem',
+    marginBottom: '2rem',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '1.5rem',
+      marginBottom: '1rem',
+    }
+  },
+  subtitle: {
+    fontSize: '1.25rem',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '1rem',
+    }
   },
   loadingContainer: {
     display: 'flex',
@@ -267,7 +317,23 @@ const ResumePreview = ({ data, componentRef }) => {
       </div>
     );
   }
-
+  const previewStyles = {
+    headshot: {
+      width: '150px',
+      height: '150px',
+      borderRadius: '50%',
+      [theme.breakpoints.down('sm')]: {
+        width: '100px',
+        height: '100px',
+      }
+    },
+    section: {
+      marginBottom: '2rem',
+      [theme.breakpoints.down('sm')]: {
+        marginBottom: '1rem',
+      }
+    }
+  };
   return (
     <div className={classes.previewContainer} ref={componentRef}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -346,8 +412,8 @@ function ResumeBuilder() {
 
   return (
     <div className={classes.container}>
-      <Typography variant="h2" align="center">
-        Resume Builder
+      <Typography variant="h2" align="center" className={classes.title}>
+      Resume Builder
       </Typography>
       {error && (
         <Typography color="error" align="center">

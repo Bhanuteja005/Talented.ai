@@ -10,11 +10,20 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     alignItems: 'center',
     gap: '2rem',
-    paddingTop: '10vh',
+    padding: '5vh 1rem',
+    width: '100%',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
   },
   contentContainer: {
     display: 'flex',
     gap: '2rem',
+    width: '100%',
+    maxWidth: '1200px',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      gap: '1rem',
+    },
   },
   formContainer: {
     width: '500px',
@@ -23,18 +32,32 @@ const useStyles = makeStyles({
     borderRadius: '0.5rem',
     overflow: 'hidden',
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    '@media (max-width: 768px)': {
+      width: '100%',
+      height: 'auto',
+      minHeight: '500px',
+    },
   },
   innerContainer: {
     padding: '1.5rem',
+    '@media (max-width: 768px)': {
+      padding: '1rem',
+    },
   },
   title: {
     fontWeight: 'bold',
     fontSize: '1.25rem',
     marginBottom: '0.5rem',
+    '@media (max-width: 768px)': {
+      fontSize: '1.1rem',
+    },
   },
   formGroup: {
     marginBottom: '1rem',
-    paddingRight:'1rem'
+    paddingRight: '1rem',
+    '@media (max-width: 768px)': {
+      paddingRight: '0',
+    },
   },
   label: {
     display: 'block',
@@ -51,6 +74,7 @@ const useStyles = makeStyles({
     padding: '0.5rem 0.75rem',
     color: '#4a5568',
     lineHeight: '1.25',
+    boxSizing: 'border-box',
     '&:focus': {
       outline: 'none',
       boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
@@ -58,6 +82,9 @@ const useStyles = makeStyles({
   },
   buttonContainer: {
     padding: '1.5rem',
+    '@media (max-width: 768px)': {
+      padding: '1rem',
+    },
   },
   button: {
     backgroundColor: '#4299e1',
@@ -65,6 +92,7 @@ const useStyles = makeStyles({
     fontWeight: 'bold',
     padding: '0.5rem 1rem',
     borderRadius: '0.375rem',
+    width: '100%',
     '&:hover': {
       backgroundColor: '#2b6cb0',
     },
@@ -84,6 +112,16 @@ const useStyles = makeStyles({
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
     whiteSpace: 'pre-line',
     overflowY: 'auto',
+    '@media (max-width: 768px)': {
+      width: '90%',
+      height: '400px',
+    },
+  },
+  pageTitle: {
+    fontFamily: "Chillax-semibold, sans-serif",
+    '@media (max-width: 768px)': {
+      fontSize: '1.75rem',
+    },
   },
   loaderContainer: {
     display: 'flex',

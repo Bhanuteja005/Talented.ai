@@ -1,73 +1,117 @@
 import { Avatar, CircularProgress, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { createTheme, makeStyles } from '@material-ui/core/styles';
 import { Android, Person } from '@material-ui/icons';
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
-const useStyles = makeStyles({
+const theme = createTheme({
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
+});
+
+const useStyles = makeStyles((theme) => ({
   container: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '2rem',
     paddingTop: '5vh',
-    width: '600px',
+    width: '100%',
+    maxWidth: '600px',
+    margin: '0 auto',
+    padding: '0 1rem',
+    [theme.breakpoints.down('sm')]: {
+      height: 'calc(100vh - 100px)',
+      paddingTop: '2vh',
+      gap: '1rem',
+      margin: '0 15px', // Add horizontal margins for small screens
+      width: 'calc(100% - 30px)', // Adjust width to account for margins
+      maxWidth: 'none',
+    },
   },
   contentContainer: {
     display: 'flex',
     gap: '2rem',
+    width: '100%',
+    [theme.breakpoints.down('sm')]: {
+      
+      gap: '1rem',
+      flexDirection: 'column',
+    },
   },
-
   formContainer: {
-    width: '500px',
-    height: '400px',
+    width: '100%',
+    maxWidth: '500px',
+    height: 'auto',
+    minHeight: '400px',
     border: '1px solid #e2e8f0',
     borderRadius: '0.5rem',
     overflow: 'hidden',
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    [theme.breakpoints.down('sm')]: {
+      maxWidth: '100%',
+    },
   },
-  innerContainer:{
-    marginTop: '50px',
-
-    width: '350px',
-
-    marginLeft: '50px',
+  innerContainer: {
+    margin: '2rem',
+    width: 'auto',
+    [theme.breakpoints.down('sm')]: {
+      margin: '1rem',
+    },
   },
   chatContainer: {
-    width: 'auto',
+    width: '100%',
     height: '600px',
     display: 'flex',
     flexDirection: 'column',
     border: '1px solid #e2e8f0',
     borderRadius: '0.5rem',
+    [theme.breakpoints.down('sm')]: {
+      height: 'calc(100vh - 200px)',
+    },
   },
   chatMessages: {
     textAlign: 'left',
     flex: 1,
     overflowY: 'auto',
     padding: '1rem',
+    [theme.breakpoints.down('sm')]: {
+      padding: '0.5rem',
+    },
+  },
+  messageContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: '70%',
+    [theme.breakpoints.down('sm')]: {
+      maxWidth: '80%',
+    },
   },
   messageBox: {
-    padding: '0.75rem',
-    marginBottom: '0.5rem',
+    padding: '1rem',
     borderRadius: '0.5rem',
-    maxWidth: '80%',
-  },
-  aiMessage: {
-    backgroundColor: '#f3f4f6',
-    alignSelf: 'flex-start',
-  },
-  userMessage: {
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    alignSelf: 'flex-end',
+    maxWidth: '100%',
+    wordBreak: 'break-word',
+    [theme.breakpoints.down('sm')]: {
+      padding: '0.75rem',
+      fontSize: '0.9rem',
+    },
   },
   inputContainer: {
     padding: '1rem',
     borderTop: '1px solid #e2e8f0',
+    [theme.breakpoints.down('sm')]: {
+      padding: '0.5rem',
+    },
   },
   input: {
-    marginTop: '10px',
     width: '95%',
     padding: '0.75rem',
     borderRadius: '0.375rem',
@@ -76,9 +120,14 @@ const useStyles = makeStyles({
       outline: 'none',
       borderColor: '#3b82f6',
     },
+    [theme.breakpoints.down('sm')]: {
+      
+      width: '100%',
+      padding: '0.5rem',
+    },
   },
   scoreContainer: {
-    position: 'absolute',
+    position: 'fixed',
     top: '1rem',
     right: '1rem',
     padding: '0.5rem 1rem',
@@ -86,6 +135,20 @@ const useStyles = makeStyles({
     color: 'white',
     borderRadius: '0.5rem',
     fontWeight: 'bold',
+    zIndex: 1000,
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '0.8rem',
+      padding: '0.25rem 0.75rem',
+    },
+  },
+  title: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    marginBottom: '1.5rem',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '1.25rem',
+      marginBottom: '1rem',
+    },
   },
 
   button: {
@@ -170,7 +233,14 @@ userMessage: {
   color: 'white',
   borderTopRightRadius: 0,
 },
-});
+h2: {
+  fontSize: '2rem',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.5rem',
+    marginBottom: '1rem',
+  },
+},
+}));
 
 const InterviewForm = ({ onStart }) => {
   const classes = useStyles();
@@ -406,9 +476,9 @@ const [answeredQuestions, setAnsweredQuestions] = useState(0);
   
     return (
       <div className={classes.container}>
-        <Typography variant="h2" align="center">
-        Interview Practice Bot
-        </Typography>
+        <Typography variant="h2" align="center" className={classes.h2}>
+      Interview Practice Bot
+    </Typography>
         {score > 0 && answeredQuestions > 0 && (
       <div className={classes.scoreContainer}>
         Current Score: {Math.round(score / answeredQuestions)}/100
