@@ -387,29 +387,52 @@ function ResumeBuilder() {
   const handleSubmit = async (formData) => {
     setLoading(true);
     setError(null);
-
+  
     try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'companies') {
-          data.append(key, JSON.stringify(formData[key]));
-        } else if (key === 'headshot' && formData[key]) {
-          data.append(key, formData[key]);
-        } else {
-          data.append(key, formData[key]);
+      const requestData = {
+        fullName: formData.fullName.trim(),
+        currentPosition: formData.currentPosition.trim(),
+        currentLength: Number(formData.currentLength),
+        currentTechnologies: formData.currentTechnologies.trim(),
+        companies: formData.companies.map(company => ({
+          name: company.name.trim(),
+          position: company.position.trim()
+        }))
+      };
+  
+      const API_URL = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:4444'
+        : 'https://talented-ai-api.vercel.app';
+  
+      const response = await axios.post(
+        `${API_URL}/api/resume-create`,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          timeout: 15000,
+          validateStatus: status => status < 500
         }
-      });
-
-      const response = await axios.post('https://talented-ai-api.vercel.app/api/resume-create', data);
+      );
+  
+      if (response.status === 400) {
+        throw new Error(response.data.error || 'Invalid form data');
+      }
+  
+      if (!response.data || response.data.error) {
+        throw new Error(response.data?.error || 'Failed to create resume');
+      }
+  
       setResumeData(response.data);
     } catch (err) {
-      console.error('Error creating resume:', err);
-      setError(err.message);
+      console.error('Resume creation error:', err);
+      setError(err.response?.data?.error || err.message || 'Server error occurred');
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className={classes.container}>
       <Typography variant="h2" align="center" className={classes.title}>

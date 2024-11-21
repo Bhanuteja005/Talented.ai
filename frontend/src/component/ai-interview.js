@@ -1,8 +1,9 @@
-import { Avatar, CircularProgress, Typography } from '@material-ui/core';
+import { Avatar, CircularProgress, LinearProgress, Typography } from '@material-ui/core';
 import { createTheme, makeStyles } from '@material-ui/core/styles';
 import { Android, Person } from '@material-ui/icons';
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const theme = createTheme({
   breakpoints: {
@@ -40,8 +41,9 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     gap: '2rem',
     width: '100%',
+    justifyContent: 'center', // Center content
+    transition: 'all 0.3s ease', // Smooth transition
     [theme.breakpoints.down('sm')]: {
-      
       gap: '1rem',
       flexDirection: 'column',
     },
@@ -73,9 +75,19 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     border: '1px solid #e2e8f0',
     borderRadius: '0.5rem',
+    transition: 'all 0.3s ease',
+    opacity: 1,
+    visibility: 'visible',
     [theme.breakpoints.down('sm')]: {
       height: 'calc(100vh - 200px)',
     },
+    '&.hidden': {
+      opacity: 0,
+      visibility: 'hidden',
+      height: 0,
+      margin: 0,
+      padding: 0,
+    }
   },
   chatMessages: {
     textAlign: 'left',
@@ -240,66 +252,284 @@ h2: {
     marginBottom: '1rem',
   },
 },
+progressContainer: {
+  width: '100%', // Fixed width for progress
+  padding: '2rem',
+  backgroundColor: '#fff',
+  borderRadius: '0.5rem',
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s ease',
+  opacity: 0,
+  visibility: 'hidden',
+  height: 0,
+  '&.visible': {
+    opacity: 1,
+    visibility: 'visible',
+    height: 'auto',
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+  }
+},
+questionProgress: {
+  marginBottom: '1.5rem',
+},
+progressLabel: {
+  display: 'flex',
+  justifyContent: 'space-between',
+  marginBottom: '0.5rem',
+  fontSize: '0.875rem',
+  color: '#4a5568',
+},
+chartContainer: {
+  width: '100%',
+  height: '300px',
+  marginTop: '2rem',
+},
+summaryStats: {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+  gap: '1rem',
+  marginTop: '2rem',
+},
+statCard: {
+  padding: '1rem',
+  backgroundColor: '#f8fafc',
+  borderRadius: '0.5rem',
+  textAlign: 'center',
+},
+statValue: {
+  fontSize: '1.5rem',
+  fontWeight: 'bold',
+  color: '#2563eb',
+},
+statLabel: {
+  fontSize: '0.875rem',
+  color: '#4a5568',
+},
 }));
-
-const InterviewForm = ({ onStart }) => {
+const ProgressSummary = ({ questions, scores, answeredQuestions, totalQuestions }) => {
   const classes = useStyles();
-  const [jobTitle, setJobTitle] = useState("");
-  const [skills, setSkills] = useState("");
-  const [experience, setExperience] = useState("");
 
-  const handleSubmit = () => {
-    onStart({
-      jobTitle,
-      skills,
-      experience,
-    });
+  const chartData = questions.map((question, index) => ({
+    name: `Q${index + 1}`,
+    score: scores[index] || 0,
+  }));
+
+  const averageScore = Math.round(
+    scores.reduce((acc, score) => acc + score, 0) / scores.length
+  );
+
+  const strengthAreas = scores.filter(score => score >= 70).length;
+  const improvementAreas = scores.filter(score => score < 70).length;
+
+  return (
+<div className={`${classes.progressContainer} ${answeredQuestions === totalQuestions ? 'visible' : ''}`}>
+        <Typography variant="h6" gutterBottom>
+        Assessment Progress Summary
+      </Typography>
+
+      <div className={classes.summaryStats}>
+        <div className={classes.statCard}>
+          <div className={classes.statValue}>{averageScore}%</div>
+          <div className={classes.statLabel}>Average Score</div>
+        </div>
+        <div className={classes.statCard}>
+          <div className={classes.statValue}>{strengthAreas}</div>
+          <div className={classes.statLabel}>Strong Areas</div>
+        </div>
+        <div className={classes.statCard}>
+          <div className={classes.statValue}>{improvementAreas}</div>
+          <div className={classes.statLabel}>Areas to Improve</div>
+        </div>
+      </div>
+
+      {questions.map((question, index) => (
+        <div key={index} className={classes.questionProgress}>
+          <div className={classes.progressLabel}>
+            <span>Question {index + 1}</span>
+            <span>{scores[index]}%</span>
+          </div>
+          <LinearProgress
+            variant="determinate"
+            value={scores[index]}
+            color={scores[index] >= 70 ? "primary" : "secondary"}
+          />
+        </div>
+      ))}
+
+      <div className={classes.chartContainer}>
+        <ResponsiveContainer>
+          <BarChart data={chartData}>
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 100]} />
+            <Tooltip />
+            <Bar
+              dataKey="score"
+              fill="#3b82f6"
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+// SkillAssessmentForm Component
+const SkillAssessmentForm = ({ onStart }) => {
+  const classes = useStyles();
+  const [formData, setFormData] = useState({
+    skillName: '',
+    skillLevel: 'beginner',
+    exerciseType: 'coding',
+    focusArea: ''
+  });
+
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const skillOptions = [
+    { value: 'javascript', label: 'JavaScript', areas: ['Frontend', 'Backend', 'Algorithms'] },
+    { value: 'python', label: 'Python', areas: ['Data Science', 'Backend', 'Automation'] },
+    { value: 'react', label: 'React', areas: ['Components', 'Hooks', 'State Management'] },
+    { value: 'algorithms', label: 'Algorithms', areas: ['Sorting', 'Searching', 'Dynamic Programming'] }
+  ];
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const requestBody = {
+        jobTitle: formData.skillName,
+        skills: formData.focusArea,
+        experience: formData.skillLevel === 'beginner' ? 0 : 
+                   formData.skillLevel === 'intermediate' ? 3 : 5,
+        currentQuestion: 0,
+        exerciseType: formData.exerciseType
+      };
+  
+      const response = await fetch('https://talented-ai-api.vercel.app/api/get-interview-question', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(requestBody)
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      
+      if (!data.question) {
+        throw new Error('Invalid question format received');
+      }
+  
+      onStart({
+        ...formData,
+        initialQuestion: data
+      });
+    } catch (error) {
+      console.error('Error starting assessment:', error);
+      setErrors({ 
+        submit: 'Failed to start assessment. Please try again.' 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className={classes.formContainer}>
       <div className={classes.innerContainer}>
-        <div className={classes.title}>AI Interview Assistant</div>
+        <div className={classes.title}>Interactive Skill Assessment</div>
+        
         <div className={classes.formGroup}>
-          <label className={classes.label}>Job Title</label>
-          <input
+          <label className={classes.label}>Select Skill</label>
+          <select
             className={classes.input}
-            placeholder="e.g. Frontend Developer"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-          />
+            value={formData.skillName}
+            onChange={(e) => {
+              const skill = skillOptions.find(s => s.value === e.target.value);
+              setFormData({
+                ...formData,
+                skillName: e.target.value,
+                focusArea: skill?.areas[0] || ''
+              });
+            }}
+          >
+            <option value="">Select a skill...</option>
+            {skillOptions.map(skill => (
+              <option key={skill.value} value={skill.value}>
+                {skill.label}
+              </option>
+            ))}
+          </select>
         </div>
+
+        {formData.skillName && (
+          <div className={classes.formGroup}>
+            <label className={classes.label}>Focus Area</label>
+            <select
+              className={classes.input}
+              value={formData.focusArea}
+              onChange={(e) => setFormData({...formData, focusArea: e.target.value})}
+            >
+              {skillOptions
+                .find(s => s.value === formData.skillName)
+                ?.areas.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+            </select>
+          </div>
+        )}
+
         <div className={classes.formGroup}>
-          <label className={classes.label}>Required Skills</label>
-          <textarea
+          <label className={classes.label}>Skill Level</label>
+          <select
             className={classes.input}
-            placeholder="e.g. React, JavaScript, CSS"
-            value={skills}
-            onChange={(e) => setSkills(e.target.value)}
-          />
+            value={formData.skillLevel}
+            onChange={(e) => setFormData({...formData, skillLevel: e.target.value})}
+          >
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
         </div>
+
         <div className={classes.formGroup}>
-          <label className={classes.label}>Years of Experience</label>
-          <input
+          <label className={classes.label}>Exercise Type</label>
+          <select
             className={classes.input}
-            type="number"
-            placeholder="e.g. 3"
-            value={experience}
-            onChange={(e) => setExperience(e.target.value)}
-          />
+            value={formData.exerciseType}
+            onChange={(e) => setFormData({...formData, exerciseType: e.target.value})}
+          >
+            <option value="coding">Interactive Coding</option>
+            <option value="concept">Concept Practice</option>
+            <option value="debugging">Debug Challenge</option>
+          </select>
         </div>
+
+        {errors.submit && (
+          <div className={classes.error}>{errors.submit}</div>
+        )}
+
         <button
           className={classes.button}
           onClick={handleSubmit}
+          disabled={loading || !formData.skillName}
         >
-          Start Interview
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Start Learning'}
         </button>
       </div>
     </div>
   );
 };
 
-const ChatInterface = ({ messages, onSendMessage, loading }) => {
+const ChatInterface = ({ messages, onSendMessage, loading, answeredQuestions, totalQuestions }) => {
   const classes = useStyles();
   const [answer, setAnswer] = useState("");
 
@@ -312,8 +542,7 @@ const ChatInterface = ({ messages, onSendMessage, loading }) => {
   };
 
   return (
-    <div className={classes.chatContainer}>
-      <div className={classes.chatMessages}>
+<div className={`${classes.chatContainer} ${answeredQuestions === totalQuestions ? 'hidden' : ''}`}>      <div className={classes.chatMessages}>
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -355,147 +584,204 @@ const ChatInterface = ({ messages, onSendMessage, loading }) => {
     </div>
   );
 };
-function InterviewAssistant() {
-    const classes = useStyles();
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [interviewStarted, setInterviewStarted] = useState(false);
-    const [score, setScore] = useState(0);
-const [totalQuestions] = useState(5); // Total number of questions
-const [answeredQuestions, setAnsweredQuestions] = useState(0);
+function SkillAssessmentBot() {
+  const classes = useStyles();
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [assessmentStarted, setAssessmentStarted] = useState(false);
+  const [score, setScore] = useState(0);
+  const [totalQuestions] = useState(5);
+  const [answeredQuestions, setAnsweredQuestions] = useState(0);
+  const [questionHistory, setQuestionHistory] = useState([]);
+  const [scoreHistory, setScoreHistory] = useState([]);
 
-    // Add new state variables
-    const [jobDetails, setJobDetails] = useState({
-      jobTitle: '',
-      skills: '',
-      experience: ''
-    });
-    const [currentQuestionData, setCurrentQuestionData] = useState(null);
-    const navigate = useNavigate();
+  // Update state variable names
+  const [skillDetails, setSkillDetails] = useState({
+    skillName: '',
+    skillLevel: '',
+    focusArea: ''
+  });
+
+  const [currentQuestionData, setCurrentQuestionData] = useState(null);
+  const navigate = useNavigate();
+  const fetchWithRetry = async (url, options, maxRetries = 3) => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          credentials: 'include',
+          headers: {
+            ...options.headers,
+            'Accept': 'application/json',
+          }
+        });
   
-    const startInterview = async (data) => {
-      setJobDetails(data); // Store job details
-      setInterviewStarted(true);
+        const data = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        }
+  
+        return data;
+      } catch (error) {
+        if (attempt === maxRetries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+      }
+    }
+  };
+    const startAssessment = async (data) => {
+      setSkillDetails(data);
+      setAssessmentStarted(true);
       setMessages([
         {
           type: 'ai',
-          content: `Welcome to your interview for ${data.jobTitle} position. Let's begin with the first question.`
+          content: `Welcome to your ${data.skillName} skill assessment. Let's begin with the first question.`
         }
       ]);
-      // Generate first question using the passed data
       askQuestion(data);
     };
   
-    const askQuestion = async (jobData = jobDetails) => {
+    const askQuestion = async (data = skillDetails) => {
       setLoading(true);
       try {
-        const response = await fetch('https://talented-ai-api.vercel.app/api/get-interview-question', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            jobTitle: jobData.jobTitle,
-            skills: jobData.skills,
-            experience: jobData.experience,
-            currentQuestion 
-          }),
-        });
-        
-        const data = await response.json();
-        setCurrentQuestionData(data); // Store full question data
+        const requestBody = {
+          jobTitle: data.skillName,
+          skills: data.focusArea,
+          experience: data.skillLevel === 'beginner' ? 0 : 
+                     data.skillLevel === 'intermediate' ? 3 : 5,
+          currentQuestion: currentQuestion,
+          exerciseType: data.exerciseType
+        };
+    
+        const response = await fetchWithRetry(
+          'https://talented-ai-api.vercel.app/api/get-interview-question',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+          }
+        );
+    
+        if (response.error) {
+          throw new Error(response.error);
+        }
+    
+        setCurrentQuestionData(response);
         setMessages(prev => [...prev, {
           type: 'ai',
-          content: data.question
+          content: response.question
         }]);
       } catch (error) {
         console.error('Error fetching question:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    const handleAnswer = async (answer) => {
-      if (!currentQuestionData) return;
-    
-      setMessages(prev => [...prev, {
-        type: 'user',
-        content: answer
-      }]);
-    
-      setLoading(true);
-      try {
-        const response = await fetch('https://talented-ai-api.vercel.app/api/evaluate-answer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            question: currentQuestionData.question,
-            expectedAnswer: currentQuestionData.expectedAnswer,
-            userAnswer: answer
-          }),
-        });
-        
-        const feedback = await response.json();
-        
-        // Ensure score is a number and add it to total
-        const numericScore = parseInt(feedback.score) || 0;
-        setScore(prevScore => prevScore + numericScore);
-        setAnsweredQuestions(prev => prev + 1);
-        
+        const fallbackQuestion = {
+          question: `Tell me about your experience with ${data.skillName}?`,
+          expectedAnswer: "The answer should demonstrate practical experience and technical knowledge.",
+          difficulty: data.skillLevel
+        };
+        setCurrentQuestionData(fallbackQuestion);
         setMessages(prev => [...prev, {
           type: 'ai',
-          content: `${feedback.feedback}\n\nScore for this answer: ${numericScore}/100`
-        }]);
-    
-        if (currentQuestion < totalQuestions - 1) {
-          setCurrentQuestion(prev => prev + 1);
-          askQuestion();
-        } else {
-          // Calculate final average score
-          const finalScore = Math.round((score + numericScore) / totalQuestions);
-          setMessages(prev => [...prev, {
-            type: 'ai',
-            content: `Interview completed!\n\nFinal Score: ${finalScore}/100\n\nStrengths:\n${feedback.strengths.join('\n')}\n\nAreas for Improvement:\n${feedback.improvements.join('\n')}`
-          }]);
-        }
-      } catch (error) {
-        console.error('Error processing answer:', error);
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: 'Sorry, there was an error evaluating your answer. Please try again.'
+          content: fallbackQuestion.question
         }]);
       } finally {
         setLoading(false);
       }
     };
-    
-    
+const handleAnswer = async (answer) => {
+  if (!currentQuestionData) return;
   
-    return (
-      <div className={classes.container}>
-        <Typography variant="h2" align="center" className={classes.h2}>
-      Interview Practice Bot
+  setMessages(prev => [...prev, {
+    type: 'user',
+    content: answer
+  }]);
+  
+  setLoading(true);
+  try {
+    const response = await fetch('https://talented-ai-api.vercel.app/api/evaluate-answer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question: currentQuestionData.question,
+        expectedAnswer: currentQuestionData.expectedAnswer,
+        userAnswer: answer
+      }),
+    });
+    
+    const feedback = await response.json();
+    const numericScore = parseInt(feedback.score) || 0;
+    
+    // Update history
+    setQuestionHistory(prev => [...prev, currentQuestionData.question]);
+    setScoreHistory(prev => [...prev, numericScore]);
+    
+    setScore(prevScore => prevScore + numericScore);
+    setAnsweredQuestions(prev => prev + 1);
+    
+    setMessages(prev => [...prev, {
+      type: 'ai',
+      content: `${feedback.feedback}\n\nScore for this answer: ${numericScore}/100`
+    }]);
+
+    if (currentQuestion < totalQuestions - 1) {
+      setCurrentQuestion(prev => prev + 1);
+      askQuestion();
+    } else {
+      const finalScore = Math.round((score + numericScore) / totalQuestions);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: `Interview completed!\n\nFinal Score: ${finalScore}/100`
+      }]);
+    }
+  } catch (error) {
+    console.error('Error processing answer:', error);
+    setMessages(prev => [...prev, {
+      type: 'ai',
+      content: 'Sorry, there was an error evaluating your answer. Please try again.'
+    }]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+return (
+  <div className={classes.container}>
+    <Typography variant="h2" align="center" className={classes.h2}>
+      Skill Assessment Bot
     </Typography>
-        {score > 0 && answeredQuestions > 0 && (
+    {score > 0 && answeredQuestions > 0 && (
       <div className={classes.scoreContainer}>
         Current Score: {Math.round(score / answeredQuestions)}/100
       </div>
     )}
-        <div className={classes.contentContainer}>
-          {!interviewStarted ? (
-            <InterviewForm onStart={startInterview} />
-          ) : (
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleAnswer}
-              loading={loading}
+    <div className={classes.contentContainer}>
+      {!assessmentStarted ? (
+        <SkillAssessmentForm onStart={startAssessment} />
+      ) : (
+        <>
+          <ChatInterface
+            messages={messages}
+            onSendMessage={handleAnswer}
+            loading={loading}
+            answeredQuestions={answeredQuestions}
+  totalQuestions={totalQuestions}
+          />
+          {answeredQuestions === totalQuestions && (
+            <ProgressSummary 
+              questions={questionHistory}
+              scores={scoreHistory}
+              answeredQuestions={answeredQuestions}
+  totalQuestions={totalQuestions}
             />
           )}
-        </div>
-      </div>
-    );
-  }
-export default InterviewAssistant;
+        </>
+      )}
+    </div>
+  </div>
+);
+}
+  export default SkillAssessmentBot;

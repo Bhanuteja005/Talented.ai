@@ -2,7 +2,6 @@ import { Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import sanitizeHtml from 'sanitize-html';
 
   const useStyles = makeStyles(theme => ({
     container: {
@@ -134,98 +133,181 @@ import sanitizeHtml from 'sanitize-html';
     fontWeight: 'bold',
     marginTop: '1rem',
   },
+  pathContainer: {
+    width: '600px',
+    height: '600px',
+    padding: '1.5rem',
+    backgroundColor: '#fff',
+    borderRadius: '0.5rem',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    overflowY: 'auto',
+    '@media (max-width: 768px)': {
+      width: '100%',
+      height: 'auto',
+      maxHeight: '500px',
+      padding: '1rem',
+      marginTop: '1rem',
+      marginBottom: '2rem'
+    }
+  },
+  
+  milestone: {
+    marginBottom: '1.5rem',
+    padding: '1rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '0.375rem',
+    '@media (max-width: 768px)': {
+      padding: '0.75rem',
+      marginBottom: '1rem',
+      fontSize: '0.9rem'
+    }
+  },
+  
+  resourceList: {
+    listStyle: 'none',
+    padding: '0',
+    margin: '0.5rem 0',
+    '@media (max-width: 768px)': {
+      margin: '0.25rem 0'
+    }
+  },
+  mobileScrollContainer: {
+    WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+    msOverflowStyle: 'none', // Hide scrollbar on IE/Edge
+    scrollbarWidth: 'none', // Hide scrollbar on Firefox
+    '&::-webkit-scrollbar': {
+      display: 'none' // Hide scrollbar on Chrome/Safari
+    }
+  },
+
+  contentText: {
+    '@media (max-width: 768px)': {
+      fontSize: '0.9rem',
+      lineHeight: '1.4'
+    }
+  }
 }));
 
-const JobForm = ({ onSubmit }) => {
+const LearningPathForm = ({ onSubmit }) => {
   const classes = useStyles();
-  const [jobTitle, setJobTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [skills, setSkills] = useState("");
-  const [description, setDescription] = useState("");
+  const [formData, setFormData] = useState({
+    domain: 'webdev',
+    skill: '',
+    currentLevel: 'beginner',
+    learningGoal: '',
+    timeframe: 'flexible',
+    preferredStyle: 'interactive'
+  });
 
-  const handleSubmit = () => {
-    const sanitizedDescription = sanitizeHtml(description);
-    const jobData = {
-      jobTitle,
-      company,
-      skills,
-      description: sanitizedDescription,
-    };
-    onSubmit(jobData);
+  const domains = {
+    webdev: {
+      name: 'Web Development',
+      skills: ['React', 'Node.js', 'JavaScript', 'TypeScript', 'HTML/CSS']
+    },
+    mobile: {
+      name: 'Mobile Development',
+      skills: ['React Native', 'Flutter', 'iOS', 'Android']
+    },
+    data: {
+      name: 'Data Science',
+      skills: ['Python', 'Machine Learning', 'Data Analysis', 'Statistics']
+    },
+    cloud: {
+      name: 'Cloud Computing',
+      skills: ['AWS', 'Azure', 'Docker', 'Kubernetes']
+    }
   };
 
   return (
     <div className={classes.formContainer}>
       <div className={classes.innerContainer}>
-        <div className={classes.title}>Job Skills Assistant</div>
+        <Typography variant="h6" className={classes.title}>
+          Learning Agent
+        </Typography>
+
         <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="jobTitle">
-            Job Title
-          </label>
-          <input
+          <label className={classes.label}>Domain</label>
+          <select
             className={classes.input}
-            id="jobTitle"
-            type="text"
-            placeholder="Enter job title"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-          />
-        </div>
-        <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="company">
-            Company
-          </label>
-          <input
-            className={classes.input}
-            id="company"
-            type="text"
-            placeholder="Enter company name"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-          />
-        </div>
-        <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="skills">
-            Job Skills
-          </label>
-          <textarea
-            className={classes.input}
-            id="skills"
-            placeholder="Enter job skills"
-            value={skills}
-            onChange={(e) => setSkills(e.target.value)}
-          />
-        </div>
-        <div className={classes.formGroup}>
-          <label className={classes.label} htmlFor="description">
-            Job Description
-          </label>
-          <textarea
-            className={classes.input}
-            id="description"
-            placeholder="Enter job description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <div className={classes.buttonContainer}>
-          <button
-            className={classes.button}
-            type="button"
-            onClick={handleSubmit}
+            value={formData.domain}
+            onChange={(e) => setFormData({
+              ...formData,
+              domain: e.target.value,
+              skill: ''
+            })}
           >
-            Generate
-          </button>
+            {Object.entries(domains).map(([key, value]) => (
+              <option key={key} value={key}>{value.name}</option>
+            ))}
+          </select>
         </div>
+
+        <div className={classes.formGroup}>
+          <label className={classes.label}>Skill</label>
+          <select
+            className={classes.input}
+            value={formData.skill}
+            onChange={(e) => setFormData({...formData, skill: e.target.value})}
+          >
+            <option value="">Select a skill</option>
+            {domains[formData.domain].skills.map(skill => (
+              <option key={skill} value={skill}>{skill}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className={classes.formGroup}>
+          <label className={classes.label}>Current Level</label>
+          <select
+            className={classes.input}
+            value={formData.currentLevel}
+            onChange={(e) => setFormData({...formData, currentLevel: e.target.value})}
+          >
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+
+        <div className={classes.formGroup}>
+          <label className={classes.label}>Learning Goal</label>
+          <textarea
+            className={classes.input}
+            value={formData.learningGoal}
+            onChange={(e) => setFormData({...formData, learningGoal: e.target.value})}
+            placeholder="What do you want to achieve?"
+            rows={3}
+          />
+        </div>
+
+        <div className={classes.formGroup}>
+          <label className={classes.label}>Time Commitment</label>
+          <select
+            className={classes.input}
+            value={formData.timeframe}
+            onChange={(e) => setFormData({...formData, timeframe: e.target.value})}
+          >
+            <option value="intensive">Full-time (40+ hrs/week)</option>
+            <option value="balanced">Part-time (20-30 hrs/week)</option>
+            <option value="flexible">Flexible (5-10 hrs/week)</option>
+          </select>
+        </div>
+
+        <button
+          className={classes.button}
+          onClick={() => onSubmit(formData)}
+          disabled={!formData.skill || !formData.learningGoal}
+        >
+          Generate Learning Path
+        </button>
       </div>
     </div>
   );
 };
 
-function JobAssistant() {
+function LearningPathGenerator() {
   const classes = useStyles();
-  const [jobData, setJobData] = useState(null);
-  const [jobText, setJobText] = useState("");
+  const [pathData, setPathData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -239,54 +321,94 @@ function JobAssistant() {
 
   const onSubmit = async (data) => {
     setLoading(true);
-    setJobText('');
     setError(null);
-    setJobData(data);
-
+    setPathData(null);
+  
     try {
-      const response = await fetch('https://talented-ai-api.vercel.app/api/suggest-skills', {
+      const API_URL = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:4444'
+        : 'https://talented-ai-api.vercel.app';
+  
+      const response = await fetch(`${API_URL}/api/suggest-learning-path`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          skill: data.skill,
+          currentLevel: data.currentLevel,
+          learningGoal: data.learningGoal,
+          timeframe: data.timeframe,
+          preferredStyle: data.preferredStyle
+        })
       });
-
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
-
-      const result = await response.json();
-      const sanitizedSkills = sanitizeHtml(result.suggestedSkills, {
-        allowedTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em'],
-        allowedAttributes: {}
-      });
-      setJobText(sanitizedSkills);
+  
+      const { learningPath } = await response.json();
+      
+      if (!learningPath) {
+        throw new Error('Invalid response format');
+      }
+  
+      setPathData(learningPath);
     } catch (error) {
-      console.error('Error generating suggested skills:', error);
-      setError('Failed to generate suggested skills. Please try again.');
+      console.error('Error:', error);
+      setError(error.message || 'Failed to generate learning path. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className={classes.container}>
-      <Typography variant="h2" align="center" style={{ fontFamily: "Chillax-semibold, sans-serif" }}>
+      <Typography variant="h2" className={classes.pageTitle}>
         Learning Agent
       </Typography>
       <div className={classes.contentContainer}>
-        <JobForm onSubmit={onSubmit} />
-        <div className={classes.jobDescriptionContainer}>
+        <LearningPathForm onSubmit={onSubmit} />
+        <div className={classes.pathContainer}>
           {loading ? (
             <div className={classes.loaderContainer}>
               <div className="loader"></div>
-              <span>Loading...</span>
+              <span>Generating your learning path...</span>
             </div>
-          ) : (
+          ) : error ? (
+            <div className={classes.errorMessage}>{error}</div>
+          ) : pathData && (
             <div>
-              {error && <div className={classes.errorMessage}>{error}</div>}
-              <div dangerouslySetInnerHTML={{ __html: jobText }} />
+              <Typography variant="h6">{pathData.overview}</Typography>
+              <Typography variant="subtitle1">
+                Estimated time: {pathData.estimatedTimeToComplete}
+              </Typography>
+              
+              <Typography variant="h6" style={{marginTop: '1rem'}}>
+                Prerequisites:
+              </Typography>
+              <ul className={classes.resourceList}>
+                {pathData.prerequisites.map((prereq, index) => (
+                  <li key={index}>{prereq}</li>
+                ))}
+              </ul>
+
+              <Typography variant="h6" style={{marginTop: '1.5rem'}}>
+                Milestones:
+              </Typography>
+              {pathData.milestones.map((milestone, index) => (
+                <div key={index} className={classes.milestone}>
+                  <Typography variant="subtitle1">
+                    <strong>{milestone.title}</strong>
+                  </Typography>
+                  <Typography variant="body2">{milestone.description}</Typography>
+                  <Typography variant="caption">
+                    Time estimate: {milestone.timeEstimate}
+                  </Typography>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -295,4 +417,4 @@ function JobAssistant() {
   );
 }
 
-export default JobAssistant;
+export default LearningPathGenerator;

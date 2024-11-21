@@ -28,44 +28,27 @@ const validateAnswer = [
   body('userAnswer').trim().notEmpty().escape()
 ];
 
+const validateResumeInput = (req, res, next) => {
+  try {
+    const { fullName, currentPosition, currentLength, currentTechnologies, companies } = req.body;
 
-const validateResumeData = [
-  body('fullName')
-    .trim()
-    .notEmpty().withMessage('Full name is required')
-    .escape(),
-  body('currentPosition')
-    .trim()
-    .notEmpty().withMessage('Current position is required')
-    .escape(),
-  body('currentLength')
-    .isFloat({ min: 0 }).withMessage('Experience length must be a positive number')
-    .toFloat(),
-  body('currentTechnologies')
-    .trim()
-    .notEmpty().withMessage('Technologies are required')
-    .escape(),
-  body('companies')
-    .custom((value) => {
-      try {
-        const companies = typeof value === 'string' ? JSON.parse(value) : value;
-        if (!Array.isArray(companies)) {
-          throw new Error('Companies must be an array');
-        }
-        if (companies.length === 0) {
-          throw new Error('At least one company is required');
-        }
-        companies.forEach(company => {
-          if (!company.name || !company.position) {
-            throw new Error('Each company must have a name and position');
-          }
-        });
-        return true;
-      } catch (error) {
-        throw new Error(`Invalid companies format: ${error.message}`);
-      }
-    })
-];
+    if (!fullName || !currentPosition || !currentTechnologies) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (!Array.isArray(companies) || companies.length === 0) {
+      return res.status(400).json({ error: 'At least one company is required' });
+    }
+
+    if (typeof currentLength !== 'number' || currentLength < 0) {
+      return res.status(400).json({ error: 'Invalid experience length' });
+    }
+
+    next();
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid request format' });
+  }
+};
 
 // Set mongoose strictQuery option
 mongoose.set('strictQuery', true);
@@ -114,42 +97,89 @@ app.use("/host", require("./routes/downloadRoutes"));
 app.get("/", (req, res) => {
   res.send("<h1>Server is running!</h1>");
 });
-
 // Job Skills Suggestion API Endpoint
-app.post("/api/suggest-skills", async (req, res) => {
-  const { jobTitle, company, location, jobType, description, skills } = req.body;
-
-  const prompt = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `Job Title: ${jobTitle}\nCompany: ${company}\nLocation: ${location}\nJob Type: ${jobType}\nDescription: ${description}\nSkills: ${skills}\nBased on the above job description, suggest some learning skills and learning paths that would be beneficial for a candidate applying for this job.`
-          }
-        ]
-      }
-    ]
-  };
-
-
+app.post("/api/suggest-learning-path", async (req, res) => {
   try {
+    const { skill, currentLevel, learningGoal, timeframe, preferredStyle } = req.body;
+    
+    if (!skill || !currentLevel || !learningGoal) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const prompt = {
+      contents: [{
+        role: "user",
+        parts: [{
+          text: `Generate a structured learning path in valid JSON format only, no additional text:
+          {
+            "learningPath": {
+              "overview": "Brief overview of ${skill} learning path",
+              "prerequisites": ["Required prerequisite 1", "Required prerequisite 2"],
+              "milestones": [
+                {
+                  "title": "Milestone title",
+                  "description": "Milestone description",
+                  "duration": "Estimated duration",
+                  "resources": [
+                    {
+                      "type": "video|article|exercise",
+                      "title": "Resource title",
+                      "url": "Resource URL"
+                    }
+                  ]
+                }
+              ],
+              "estimatedTimeToComplete": "Total estimated duration",
+              "skillLevel": "${currentLevel}",
+              "goal": "${learningGoal}"
+            }
+          }`
+        }]
+      }]
+    };
+
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
       prompt,
-      { headers: { 'Content-Type': 'application/json' } }
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      }
     );
 
-    if (response.data && response.data.candidates && response.data.candidates[0].content && response.data.candidates[0].content.parts) {
-      const suggestedSkills = response.data.candidates[0].content.parts.map(part => part.text).join("\n");
-      res.json({ suggestedSkills });
-    } else {
-      console.log("No valid response structure found.");
-      res.status(500).json({ error: "No valid response from AI." });
+    if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid AI response structure');
     }
+
+    // Clean the response text
+    let responseText = response.data.candidates[0].content.parts[0].text;
+    responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    responseText = responseText.trim();
+
+    try {
+      const learningPath = JSON.parse(responseText);
+      
+      // Validate response structure
+      if (!learningPath.learningPath || !learningPath.learningPath.milestones) {
+        throw new Error('Invalid learning path structure');
+      }
+
+      res.json(learningPath);
+    } catch (parseError) {
+      console.error("JSON Parse Error:", parseError);
+      console.log("Raw Response:", responseText);
+      res.status(500).json({ 
+        error: "Failed to parse learning path",
+        details: parseError.message
+      });
+    }
+
   } catch (error) {
-    console.error("Error generating content:", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    console.error("Error generating learning path:", error);
+    res.status(500).json({ 
+      error: "Failed to generate learning path",
+      details: error.message 
+    });
   }
 });
 // Recruiter Agent API Endpoint
@@ -367,159 +397,113 @@ app.post("/api/evaluate-answer",
     }
 });
 
-
-
-// Resume Generation API Endpoint
-app.post("/api/resume-create", validateResumeData, async (req, res) => {
+// Add generateSkills helper function
+const generateSkills = async (data) => {
   try {
-    // Validation check
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: errors.array() 
-      });
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+      {
+        contents: [{
+          role: "user",
+          parts: [{
+            text: `Generate a list of professional skills for:
+                  Position: ${data.currentPosition}
+                  Technologies: ${data.currentTechnologies}
+                  Experience: ${data.currentLength} years
+                  
+                  Return only a comma-separated list of relevant technical and soft skills.`
+          }]
+        }]
+      },
+      { timeout: 10000 }
+    );
+
+    if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid AI response structure');
     }
 
-    let { fullName, currentPosition, currentLength, currentTechnologies, companies } = req.body;
+    const skillsList = response.data.candidates[0].content.parts[0].text
+      .split(',')
+      .map(skill => skill.trim())
+      .filter(skill => skill.length > 0);
 
-    // Ensure companies is properly parsed
-    let workHistory;
-    try {
-      workHistory = typeof companies === 'string' ? JSON.parse(companies) : companies;
-    } catch (error) {
-      return res.status(400).json({
-        error: "Invalid companies data",
-        details: error.message
-      });
-    }
-
-    // Structured prompts with error handling
-    const summaryPrompt = {
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `Generate a professional summary for a resume:
-          Name: ${fullName}
-          Position: ${currentPosition}
-          Experience: ${currentLength} years
-          Technologies: ${currentTechnologies}
-          
-          Write a compelling first-person summary in 100 words highlighting expertise and career goals.
-          Focus on quantifiable achievements and technical expertise.`
-        }]
-      }]
-    };
-
-    const skillsPrompt = {
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `Based on this profile:
-          Position: ${currentPosition}
-          Technologies: ${currentTechnologies}
-          Experience: ${currentLength} years
-          
-          Generate a comprehensive list of 10-12 skills including:
-          1. Technical skills from the technologies mentioned
-          2. Relevant soft skills for the position
-          3. Industry-specific competencies
-          
-          Format as a clear, bulleted list.`
-        }]
-      }]
-    };
-
-    const experiencePrompt = {
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `Generate detailed work experience descriptions for each role:
-          ${workHistory.map(job => 
-            `Company: ${job.name}
-             Position: ${job.position}
-             Provide:
-             - 3 key responsibilities
-             - 2 notable achievements with metrics
-             - Technologies used
-             - Business impact`
-          ).join('\n\n')}
-          
-          Format in bullet points using strong action verbs.`
-        }]
-      }]
-    };
-
-    // Make parallel API calls with error handling
-    try {
-      const [summaryResp, skillsResp, experienceResp] = await Promise.all([
-        axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
-          summaryPrompt,
-          { 
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000 
-          }
-        ),
-        axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
-          skillsPrompt,
-          { 
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000 
-          }
-        ),
-        axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
-          experiencePrompt,
-          { 
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000 
-          }
-        )
-      ]);
-
-      // Extract and clean generated content with fallbacks
-      const summary = summaryResp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Failed to generate summary';
-      const skills = skillsResp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Failed to generate skills';
-      const experience = experienceResp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Failed to generate experience';
-
-      // Process experience text into company-specific sections
-      const experienceSections = experience.split('\n\n');
-
-      // Construct resume data
-      const resumeData = {
-        basics: {
-          name: fullName,
-          position: currentPosition,
-          yearsOfExperience: currentLength,
-          summary: summary
-        },
-        skills: skills.split('\n')
-          .map(skill => skill.trim())
-          .filter(skill => skill && !skill.startsWith('-')), // Remove empty lines and bullet points
-        workHistory: workHistory.map((company, index) => ({
-          ...company,
-          description: experienceSections[index] || 'Experience details not available'
-        })),
-        technologies: currentTechnologies.split(',').map(tech => tech.trim())
-      };
-
-      res.json(resumeData);
-
-    } catch (apiError) {
-      console.error("API call error:", apiError);
-      res.status(500).json({
-        error: "Failed to generate resume content",
-        details: apiError.message
-      });
-    }
-
+    return skillsList;
   } catch (error) {
-    console.error("Resume generation error:", error);
+    console.error('Skills generation error:', error);
+    // Fallback skills based on provided technologies
+    return data.currentTechnologies
+      .split(',')
+      .map(tech => tech.trim())
+      .filter(tech => tech.length > 0);
+  }
+};
+// Add generateSummary helper function
+const generateSummary = async (data) => {
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+      {
+        contents: [{
+          role: "user",
+          parts: [{
+            text: `Generate a professional summary for:
+                  Name: ${data.fullName}
+                  Current Position: ${data.currentPosition}
+                  Years of Experience: ${data.currentLength}
+                  Technologies: ${data.currentTechnologies}
+                  
+                  Write a concise, first-person professional summary (100-150 words) that:
+                  1. Highlights key expertise
+                  2. Mentions years of experience
+                  3. Emphasizes technical skills
+                  4. Notes significant achievements
+                  
+                  Return only the summary text, no additional formatting.`
+          }]
+        }]
+      },
+      { timeout: 10000 }
+    );
+
+    if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid AI response structure');
+    }
+
+    return response.data.candidates[0].content.parts[0].text.trim();
+  } catch (error) {
+    console.error('Summary generation error:', error);
+    // Fallback summary
+    return `Experienced ${data.currentPosition} with ${data.currentLength} years of expertise in ${data.currentTechnologies}. Proven track record of delivering high-quality solutions and driving technical innovation.`;
+  }
+};
+// Update resume creation endpoint
+app.post("/api/resume-create", validateResumeInput, async (req, res) => {
+  try {
+    const { fullName, currentPosition, currentLength, currentTechnologies, companies } = req.body;
+
+    // Generate AI content with error handling
+    const [summary, skills] = await Promise.allSettled([
+      generateSummary({ fullName, currentPosition, currentLength, currentTechnologies }),
+      generateSkills({ currentPosition, currentTechnologies, currentLength })
+    ]);
+
+    const resumeData = {
+      fullName,
+      currentPosition, 
+      currentLength,
+      currentTechnologies,
+      companies,
+      summary: summary.status === 'fulfilled' ? summary.value : 'Professional summary generation failed',
+      skills: skills.status === 'fulfilled' ? skills.value : currentTechnologies.split(','),
+      generatedAt: new Date().toISOString()
+    };
+
+    res.json(resumeData);
+  } catch (error) {
+    console.error('Resume generation error:', error);
     res.status(500).json({
-      error: "Failed to process resume request",
-      details: error.message
+      error: 'Failed to generate resume',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

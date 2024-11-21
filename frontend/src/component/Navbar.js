@@ -154,7 +154,7 @@ const Navbar = (props) => {
             Profile
           </StyledButton>,
           <StyledButton key="ai-interview" variants={buttonVariants} onClick={() => handleClick("/ai-interview")}>
-            Mock Interview
+            Skill Assessment
           </StyledButton>,
           <StyledButton key="resume" variants={buttonVariants} onClick={() => handleClick("/resume")}>
             Resume Builder
@@ -200,7 +200,7 @@ const Navbar = (props) => {
           { key: "home", icon: <HomeIcon />, onClick: () => handleClick("/home") },
           { key: "applications", icon: <WorkIcon />, onClick: () => handleClick("/applications") },
           { key: "profile", icon: <PersonIcon />, onClick: () => handleClick("/profile") },
-          { key: "ai-interview", icon: <PersonIcon />, onClick: () => handleClick("/ai-interview") },
+          { key: "skill-assesment", icon: <PersonIcon />, onClick: () => handleClick("/ai-interview") },
           { key: "resume", icon: <PersonIcon />, onClick: () => handleClick("/resume") },
           { key: "candidate", icon: <PersonIcon />, onClick: () => handleClick("/candidate") },
           { key: "logout", icon: <ExitToAppIcon />, onClick: () => handleClick("/logout") }
