@@ -207,7 +207,7 @@ const JobForm = ({ onSubmit }) => {
 
 function JobAssistant() {
   const classes = useStyles();
-  const [jobData, setJobData] = useState(null);
+  const [ setJobData] = useState(null);
   const [jobText, setJobText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

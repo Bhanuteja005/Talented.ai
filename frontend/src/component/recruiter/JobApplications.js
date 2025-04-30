@@ -3,6 +3,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  CircularProgress,
   FormControlLabel,
   Grid,
   IconButton,
@@ -27,14 +28,7 @@ const useStyles = makeStyles((theme) => ({
   body: {
     height: "inherit",
   },
-  statusBlock: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    textTransform: "uppercase",
-  },
+
   jobTileOuter: {
     padding: "30px",
     margin: "20px 0",
@@ -63,6 +57,12 @@ const useStyles = makeStyles((theme) => ({
     height: theme.spacing(17),
   },
   statusBlock: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textTransform: "uppercase",
     padding: '10px 20px',
     fontSize: '0.875rem',
     borderRadius: '20px',
@@ -395,21 +395,14 @@ const ApplicationTile = (props) => {
   const { application, getData } = props;
   const setPopup = useContext(SetPopupContext);
   const [open, setOpen] = useState(false);
+  const [interviewResult, setInterviewResult] = useState(null);
+  const [loadingResults, setLoadingResults] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   const appliedOn = new Date(application.dateOfApplication);
 
   const handleClose = () => {
     setOpen(false);
-  };
-
-  const colorSet = {
-    applied: "#3454D1",
-    shortlisted: "#DC851F",
-    accepted: "#09BC8A",
-    rejected: "#D1345B",
-    deleted: "#B49A67",
-    cancelled: "#FF8484",
-    finished: "#4EA5D9",
   };
 
   const getResume = () => {
@@ -472,6 +465,34 @@ const ApplicationTile = (props) => {
       });
   };
 
+  const fetchInterviewResults = async (applicationId) => {
+    setLoadingResults(true);
+    try {
+      const response = await axios.get(
+        `${apiList.applications}/${applicationId}/interview-results`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      
+      if (response.data.success) {
+        setInterviewResult(response.data.result);
+        setShowResults(true);
+      }
+    } catch (error) {
+      console.error("Error fetching interview results:", error);
+      setPopup({
+        open: true,
+        severity: "error",
+        message: "Failed to load interview results",
+      });
+    } finally {
+      setLoadingResults(false);
+    }
+  };
+
   const buttonSet = {
     applied: (
       <>
@@ -495,21 +516,44 @@ const ApplicationTile = (props) => {
     ),
     shortlisted: (
       <>
-        <Grid item xs>
-          <Button
-            className={`${classes.statusBlock} accepted`}
-            onClick={() => updateStatus("accepted")}
-          >
-            Accept
-          </Button>
-        </Grid>
-        <Grid item xs>
-          <Button
-            className={`${classes.statusBlock} rejected`}
-            onClick={() => updateStatus("rejected")}
-          >
-            Reject
-          </Button>
+        <Grid container spacing={1}>
+          <Grid item xs={12}>
+            <Button
+              className={`${classes.statusBlock} accepted`}
+              onClick={() => updateStatus("accepted")}
+            >
+              Accept
+            </Button>
+          </Grid>
+          {application.interviewCompleted ? (
+            <Grid item xs={12}>
+              <Button
+                className={`${classes.statusBlock}`}
+                style={{ backgroundColor: '#6366f1', color: 'white' }}
+                onClick={() => fetchInterviewResults(application._id)}
+              >
+                View Interview Results
+              </Button>
+            </Grid>
+          ) : (
+            <Grid item xs={12}>
+              <Button
+                className={`${classes.statusBlock}`}
+                style={{ backgroundColor: '#9CA3AF', color: 'white' }}
+                disabled
+              >
+                Awaiting Interview
+              </Button>
+            </Grid>
+          )}
+          <Grid item xs={12}>
+            <Button
+              className={`${classes.statusBlock} rejected`}
+              onClick={() => updateStatus("rejected")}
+            >
+              Reject
+            </Button>
+          </Grid>
         </Grid>
       </>
     ),
@@ -642,12 +686,81 @@ const ApplicationTile = (props) => {
           </Button>
         </Paper>
       </Modal>
+      <Modal open={showResults} onClose={() => setShowResults(false)} className={classes.popupDialog}>
+        <Paper
+          style={{
+            padding: "20px",
+            outline: "none",
+            display: "flex",
+            flexDirection: "column",
+            minWidth: "60%",
+            maxWidth: "800px",
+            maxHeight: "80vh",
+            overflowY: "auto"
+          }}
+        >
+          <Typography variant="h5" gutterBottom>Interview Results</Typography>
+          
+          {loadingResults ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '30px' }}>
+              <CircularProgress />
+            </div>
+          ) : interviewResult ? (
+            <>
+              <Typography variant="h6" color="primary" gutterBottom>
+                Overall Score: {interviewResult.overallScore}/100
+              </Typography>
+              
+              <Typography variant="subtitle1" style={{ marginTop: '20px', marginBottom: '10px', fontWeight: 'bold' }}>
+                Question & Answer Details:
+              </Typography>
+              
+              {interviewResult.questions.map((question, index) => (
+                <Paper key={index} style={{ padding: '15px', margin: '10px 0', backgroundColor: '#f5f5f5' }}>
+                  <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
+                    Question {index + 1}:
+                  </Typography>
+                  <Typography variant="body1" paragraph>
+                    {question}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2" style={{ fontWeight: 'bold' }}>
+                    Answer:
+                  </Typography>
+                  <Typography variant="body2" paragraph style={{ fontStyle: 'italic' }}>
+                    {interviewResult.answers[index]}
+                  </Typography>
+                  
+                  <Typography variant="subtitle2">
+                    Score: <span style={{ color: '#1E88E5', fontWeight: 'bold' }}>{interviewResult.scores[index]}/100</span>
+                  </Typography>
+                </Paper>
+              ))}
+              
+              <Typography variant="body2" style={{ marginTop: '15px', color: '#666' }}>
+                Interview completed on: {new Date(interviewResult.completedAt).toLocaleString()}
+              </Typography>
+              
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={() => setShowResults(false)}
+                style={{ marginTop: '20px', alignSelf: 'center' }}
+              >
+                Close
+              </Button>
+            </>
+          ) : (
+            <Typography variant="body1">No interview results found.</Typography>
+          )}
+        </Paper>
+      </Modal>
     </Paper>
   );
 };
 
 const JobApplications = (props) => {
-    const classes = useStyles();
+  const classes = useStyles();
   const setPopup = useContext(SetPopupContext);
   const [applications, setApplications] = useState([]);
   const { jobId } = useParams();
@@ -734,6 +847,7 @@ const JobApplications = (props) => {
   useEffect(() => {
     getData();
   }, [getData]);
+  
   return (
     <>
       <Grid

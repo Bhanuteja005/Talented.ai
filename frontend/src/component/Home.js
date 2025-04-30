@@ -1,18 +1,18 @@
 import {
-  Button,
-  Checkbox,
-  Chip,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  InputAdornment,
-  makeStyles,
-  MenuItem,
-  Modal,
-  Paper,
-  Slider,
-  TextField,
-  Typography,
+    Button,
+    Checkbox,
+    Chip,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    InputAdornment,
+    makeStyles,
+    MenuItem,
+    Modal,
+    Paper,
+    Slider,
+    TextField,
+    Typography,
 } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
@@ -20,6 +20,7 @@ import SearchIcon from "@material-ui/icons/Search";
 import Rating from "@material-ui/lab/Rating";
 import axios from "axios";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { SetPopupContext } from "../App";
 
@@ -69,6 +70,7 @@ const JobTile = (props) => {
   const classes = useStyles();
   const { job } = props;
   const setPopup = useContext(SetPopupContext);
+  const navigate = useNavigate(); // Add this line to define navigate
 
   const [open, setOpen] = useState(false);
   const [sop, setSop] = useState("");
@@ -117,54 +119,54 @@ const JobTile = (props) => {
   return (
     <Paper className={classes.jobTileOuter} elevation={3} >
       <Grid container spacing={1}>
-      <Grid 
-      container 
-      item 
-      xs={12} 
-      md={9} 
-      spacing={1} 
-      direction="column"
-    >
-      <Grid item>
-        <Typography 
-          variant="h5"
-          sx={{
-            fontSize: {
-              xs: '1.2rem',
-              sm: '1.5rem'
-            }
-          }}
+        <Grid 
+          container 
+          item 
+          xs={12} 
+          md={9} 
+          spacing={1} 
+          direction="column"
         >
-          {job.title}
-        </Typography>
-      </Grid>
-      <Grid item>
-        <Rating value={job.rating !== -1 ? job.rating : null} readOnly />
-      </Grid>
-      <Grid item>Role : {job.jobType}</Grid>
-      <Grid item>Salary : &#8377; {job.salary} per month</Grid>
-      <Grid item>
-        Duration : {job.duration !== 0 ? `${job.duration} month` : `Flexible`}
-      </Grid>
-      <Grid item>Posted By : {job.recruiter.name}</Grid>
-      <Grid item>Application Deadline : {deadline}</Grid>
+          <Grid item>
+            <Typography variant="h5">
+              {job.title}
+              {job.requiresInterview && (
+                <Chip
+                  label="Audio Interview Required"
+                  size="small"
+                  color="secondary"
+                  style={{ marginLeft: '10px', fontSize: '0.7rem' }}
+                />
+              )}
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Rating value={job.rating !== -1 ? job.rating : null} readOnly />
+          </Grid>
+          <Grid item>Role : {job.jobType}</Grid>
+          <Grid item>Salary : &#8377; {job.salary} per month</Grid>
+          <Grid item>
+            Duration : {job.duration !== 0 ? `${job.duration} month` : `Flexible`}
+          </Grid>
+          <Grid item>Posted By : {job.recruiter.name}</Grid>
+          <Grid item>Application Deadline : {deadline}</Grid>
 
-      <Grid item>
-        {job.skillsets.map((skill) => (
-          <Chip 
-            key={skill}
-            label={skill} 
-            sx={{ 
-              margin: '2px',
-              fontSize: {
-                xs: '0.75rem',
-                sm: '0.875rem'
-              }
-            }} 
-          />
-        ))}
-      </Grid>
-    </Grid>
+          <Grid item>
+            {job.skillsets.map((skill) => (
+              <Chip 
+                key={skill}
+                label={skill} 
+                sx={{ 
+                  margin: '2px',
+                  fontSize: {
+                    xs: '0.75rem',
+                    sm: '0.875rem'
+                  }
+                }} 
+              />
+            ))}
+          </Grid>
+        </Grid>
         <Grid item xs={3}>
           <Button
             variant="contained"
@@ -176,6 +178,18 @@ const JobTile = (props) => {
           >
             Apply
           </Button>
+          
+          {/* Add audio interview button if the job has that requirement */}
+          {job.requiresInterview && (
+            <Button
+              variant="outlined"
+              style={{ marginTop: '10px' }}
+              onClick={() => navigate(`/jobs/${job._id}/interview`)}
+              disabled={userType() === "recruiter"}
+            >
+              Take Audio Interview
+            </Button>
+          )}
         </Grid>
       </Grid>
       <Modal open={open} onClose={handleClose} className={classes.popupDialog}>

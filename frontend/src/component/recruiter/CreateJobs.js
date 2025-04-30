@@ -1,11 +1,13 @@
 import {
-  Button,
-  Grid,
-  makeStyles,
-  MenuItem,
-  Paper,
-  TextField,
-  Typography,
+    Button,
+    Checkbox,
+    FormControlLabel,
+    Grid,
+    makeStyles,
+    MenuItem,
+    Paper,
+    TextField,
+    Typography,
 } from "@material-ui/core";
 import axios from "axios";
 import ChipInput from "material-ui-chip-input";
@@ -43,6 +45,8 @@ const CreateJobs = (props) => {
     jobType: "Full Time",
     duration: 0,
     salary: 0,
+    requiresInterview: false, // Add this field
+    interviewQuestions: 5, // Default number of questions
   });
 
   const handleInput = (key, value) => {
@@ -77,6 +81,8 @@ const CreateJobs = (props) => {
           jobType: "Full Time",
           duration: 0,
           salary: 0,
+          requiresInterview: false,
+          interviewQuestions: 5,
         });
       })
       .catch((err) => {
@@ -244,6 +250,43 @@ const CreateJobs = (props) => {
                     fullWidth
                   />
                 </Grid>
+                {/* Add interview options */}
+                <Grid item>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={jobDetails.requiresInterview}
+                        onChange={(event) => {
+                          handleInput("requiresInterview", event.target.checked);
+                        }}
+                        name="requiresInterview"
+                        color="primary"
+                      />
+                    }
+                    label="Require Audio Interview"
+                  />
+                </Grid>
+                
+                {jobDetails.requiresInterview && (
+                  <Grid item>
+                    <TextField
+                      select
+                      label="Number of Interview Questions"
+                      variant="outlined"
+                      value={jobDetails.interviewQuestions}
+                      onChange={(event) => {
+                        handleInput("interviewQuestions", event.target.value);
+                      }}
+                      fullWidth
+                    >
+                      <MenuItem value={1}>1 Question</MenuItem>
+                      <MenuItem value={3}>3 Questions</MenuItem>
+                      <MenuItem value={5}>5 Questions</MenuItem>
+                      <MenuItem value={7}>7 Questions</MenuItem>
+                      <MenuItem value={10}>10 Questions</MenuItem>
+                    </TextField>
+                  </Grid>
+                )}
               </Grid>
               <Button
                 variant="contained"

@@ -1347,13 +1347,35 @@ router.get("/rating", jwtAuth, (req, res) => {
 // Add endpoint to save interview results
 router.post("/interview-results", jwtAuth, async (req, res) => {
   try {
-    const { jobId, questions, answers, scores, overallScore } = req.body;
+    const { jobId, applicationId, questions, answers, scores, overallScore } = req.body;
     const user = req.user;
     
-    // Optional: Save interview results to database
-    // You would need to create a model for this
+    // Create a new interview result record
+    const InterviewResult = require("../db/InterviewResult");
+    const result = new InterviewResult({
+      applicationId,
+      jobId,
+      userId: user._id,
+      questions,
+      answers,
+      scores,
+      overallScore,
+      completedAt: new Date()
+    });
     
-    // For now, we'll just return success
+    await result.save();
+    
+    // Update the application status to indicate interview is completed
+    await Application.findByIdAndUpdate(
+      applicationId,
+      { 
+        $set: { 
+          interviewCompleted: true,
+          interviewScore: overallScore 
+        } 
+      }
+    );
+    
     res.json({
       message: "Interview results saved successfully",
       success: true,
@@ -1363,6 +1385,35 @@ router.post("/interview-results", jwtAuth, async (req, res) => {
     console.log(err);
     res.status(400).json({
       message: "Error saving interview results",
+      success: false,
+    });
+  }
+});
+
+// Add endpoint to get interview results
+router.get("/applications/:id/interview-results", jwtAuth, async (req, res) => {
+  try {
+    const applicationId = req.params.id;
+    const user = req.user;
+    
+    const InterviewResult = require("../db/InterviewResult");
+    const result = await InterviewResult.findOne({ applicationId });
+    
+    if (!result) {
+      return res.status(404).json({
+        message: "Interview results not found",
+        success: false
+      });
+    }
+    
+    res.json({
+      success: true,
+      result
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      message: "Error fetching interview results",
       success: false,
     });
   }

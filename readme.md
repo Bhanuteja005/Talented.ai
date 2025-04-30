@@ -12,7 +12,7 @@
 </div>
 
 ## 🎥 Demo Video
-Check out our platform in action:
+Check out our platform in  action:
 
 <div align="center">
   <a href="https://flonnect.com/video/5379d244bbbf-489e-8e9a-41d5f82addaa">

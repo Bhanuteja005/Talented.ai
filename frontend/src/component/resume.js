@@ -2,7 +2,6 @@ import { Typography } from '@material-ui/core';
 import { createTheme, makeStyles } from '@material-ui/core/styles';
 import axios from "axios";
 import React, { useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 
 // Create theme instance
@@ -166,13 +165,6 @@ const ResumeForm = ({ onSubmit }) => {
     }));
   };
 
-  const handleFileChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      headshot: e.target.files[0]
-    }));
-  };
-
   const handleAddCompany = () => {
     setFormData(prev => ({
       ...prev,
@@ -317,23 +309,7 @@ const ResumePreview = ({ data, componentRef }) => {
       </div>
     );
   }
-  const previewStyles = {
-    headshot: {
-      width: '150px',
-      height: '150px',
-      borderRadius: '50%',
-      [theme.breakpoints.down('sm')]: {
-        width: '100px',
-        height: '100px',
-      }
-    },
-    section: {
-      marginBottom: '2rem',
-      [theme.breakpoints.down('sm')]: {
-        marginBottom: '1rem',
-      }
-    }
-  };
+ 
   return (
     <div className={classes.previewContainer} ref={componentRef}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -374,10 +350,9 @@ const ResumePreview = ({ data, componentRef }) => {
 function ResumeBuilder() {
   const classes = useStyles();
   const [resumeData, setResumeData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [ setLoading] = useState(false);
   const [error, setError] = useState(null);
   const componentRef = useRef();
-  const navigate = useNavigate();
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,

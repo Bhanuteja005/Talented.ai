@@ -3,6 +3,7 @@ import { createContext, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Applications from "./component/Applications";
+import AudioInterview from "./component/AudioInterview";
 import { Footer } from "./component/Footer";
 import Home from "./component/Home";
 import Login from "./component/Login";
@@ -22,6 +23,7 @@ import JobAssistantRecruiter from "./component/recruteragent"; // Corrected impo
 import ResumeBuilder from "./component/resume";
 import MessagePopup from "./lib/MessagePopup";
 import { userType } from "./lib/isAuth";
+
 const useStyles = makeStyles((theme) => ({
   body: {
     display: "flex",
@@ -72,6 +74,8 @@ function App() {
               <Route path="/ai-interview" element={<InterviewAssistant />} />
               <Route path="/resume" element={<ResumeBuilder />} />
               <Route path="/recruiter" element={<JobAssistantRecruiter />} />
+              <Route path="/jobs/:jobId/interview" element={<AudioInterview />} />
+              <Route path="/interview/:jobId/:applicationId" element={<AudioInterview />} />
               <Route path="*" element={<ErrorPage />} />
             </Routes>
           </Grid>

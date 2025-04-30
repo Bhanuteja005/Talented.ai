@@ -10,6 +10,7 @@ import {
 import Rating from "@material-ui/lab/Rating";
 import axios from "axios";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { SetPopupContext } from "../App";
 
@@ -45,6 +46,7 @@ const ApplicationTile = (props) => {
   const classes = useStyles();
   const { application } = props;
   const setPopup = useContext(SetPopupContext);
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(application.job.rating);
 
@@ -121,6 +123,10 @@ const ApplicationTile = (props) => {
     finished: "#4EA5D9",
   };
 
+  const takeInterview = () => {
+    navigate(`/interview/${application.job._id}/${application._id}`);
+  };
+
   return (
     <Paper className={classes.jobTileOuter} elevation={3}>
       <Grid container>
@@ -160,9 +166,24 @@ const ApplicationTile = (props) => {
               {application.status}
             </Paper>
           </Grid>
-          {application.status === "accepted" ||
-          application.status === "finished" ? (
-            <Grid item>
+          
+          {/* Add interview button for shortlisted applications */}
+          {application.status === "shortlisted" && (
+            <Grid item style={{ marginTop: '10px' }}>
+              <Button
+                variant="contained"
+                className={classes.statusBlock}
+                style={{ backgroundColor: '#6366f1', color: 'white' }}
+                onClick={takeInterview}
+              >
+                Take Interview
+              </Button>
+            </Grid>
+          )}
+          
+          {/* Existing rating button for accepted jobs */}
+          {(application.status === "accepted" || application.status === "finished") && (
+            <Grid item style={{ marginTop: '10px' }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -175,7 +196,7 @@ const ApplicationTile = (props) => {
                 Rate Job
               </Button>
             </Grid>
-          ) : null}
+          )}
         </Grid>
       </Grid>
       <Modal open={open} onClose={handleClose} className={classes.popupDialog}>
