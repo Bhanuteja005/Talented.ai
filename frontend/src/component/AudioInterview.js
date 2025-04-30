@@ -106,7 +106,7 @@ const AudioInterview = () => {
   
   const classes = useStyles({ isRecording });
 
-  // Initialize speech recognition
+  // Initialize speech recognition with better error handling
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setError('Speech recognition is not supported in your browser. Try Chrome or Edge.');
@@ -119,23 +119,44 @@ const AudioInterview = () => {
     recognitionInstance.interimResults = true;
     recognitionInstance.lang = 'en-US';
 
+    // Better transcript handling with proper formatting
+    let finalTranscript = '';
+    
     recognitionInstance.onresult = (event) => {
-      let currentTranscript = '';
-      for (let i = 0; i < event.results.length; i++) {
+      let interimTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          currentTranscript += event.results[i][0].transcript + ' ';
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
         }
       }
-      setTranscript(currentTranscript);
+      
+      // Format with proper capitalization and punctuation
+      finalTranscript = formatTranscript(finalTranscript);
+      setTranscript(finalTranscript);
     };
 
     recognitionInstance.onerror = (event) => {
       console.error('Speech recognition error', event.error);
       setIsRecording(false);
+      
+      // More helpful error messages
+      let errorMessage = 'Speech recognition error';
+      if (event.error === 'no-speech') {
+        errorMessage = 'No speech was detected. Please try again.';
+      } else if (event.error === 'audio-capture') {
+        errorMessage = 'Audio capture failed. Please check your microphone.';
+      } else if (event.error === 'not-allowed') {
+        errorMessage = 'Microphone access was denied. Please allow microphone access.';
+      }
+      
       setPopup({
         open: true,
         severity: 'error',
-        message: `Speech recognition error: ${event.error}`
+        message: errorMessage
       });
     };
 
@@ -147,6 +168,23 @@ const AudioInterview = () => {
       }
     };
   }, [setPopup]);
+
+  // Helper function to format transcript with proper capitalization and punctuation
+  const formatTranscript = (text) => {
+    if (!text) return '';
+    
+    // Capitalize first letter of sentences
+    text = text.replace(/(^\s*\w|[.!?]\s*\w)/g, function(c) { 
+      return c.toUpperCase(); 
+    });
+    
+    // Add periods if missing at the end of sentences
+    if (!text.match(/[.!?]$/)) {
+      text = text.trim() + '.';
+    }
+    
+    return text;
+  };
 
   // Fetch job details and generate a single question
   useEffect(() => {
@@ -248,12 +286,15 @@ const AudioInterview = () => {
     try {
       setLoading(true);
       
+      // Ensure answer is properly formatted before sending for evaluation
+      const formattedAnswer = formatTranscript(answer);
+      
       const response = await axios.post(
         'https://talented-ai-api.vercel.app/api/evaluate-answer',
         {
           question: question.question,
           expectedAnswer: question.expectedAnswer,
-          userAnswer: answer
+          userAnswer: formattedAnswer
         },
         {
           headers: {
@@ -286,6 +327,9 @@ const AudioInterview = () => {
       setLoading(true);
       setInterviewComplete(true);
 
+      // Format the answer before submission
+      const formattedAnswer = formatTranscript(answer);
+      
       // Save the interview results to the backend
       if (applicationId) {
         await axios.post(
@@ -294,7 +338,7 @@ const AudioInterview = () => {
             jobId,
             applicationId,
             questions: [question.question],
-            answers: [answer],
+            answers: [formattedAnswer],
             scores: [score],
             overallScore: score
           },
