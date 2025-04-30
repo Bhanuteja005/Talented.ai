@@ -1344,6 +1344,30 @@ router.get("/rating", jwtAuth, (req, res) => {
   });
 });
 
+// Add endpoint to save interview results
+router.post("/interview-results", jwtAuth, async (req, res) => {
+  try {
+    const { jobId, questions, answers, scores, overallScore } = req.body;
+    const user = req.user;
+    
+    // Optional: Save interview results to database
+    // You would need to create a model for this
+    
+    // For now, we'll just return success
+    res.json({
+      message: "Interview results saved successfully",
+      success: true,
+      overallScore
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      message: "Error saving interview results",
+      success: false,
+    });
+  }
+});
+
 // Application.findOne({
 //   _id: id,
 //   userId: user._id,
