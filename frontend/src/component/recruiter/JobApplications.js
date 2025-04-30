@@ -468,6 +468,9 @@ const ApplicationTile = (props) => {
   const fetchInterviewResults = async (applicationId) => {
     setLoadingResults(true);
     try {
+      // First, refresh the application data to get the latest interviewCompleted status
+      await getData();
+      
       const response = await axios.get(
         `${apiList.applications}/${applicationId}/interview-results`,
         {
@@ -480,13 +483,19 @@ const ApplicationTile = (props) => {
       if (response.data.success) {
         setInterviewResult(response.data.result);
         setShowResults(true);
+      } else {
+        setPopup({
+          open: true,
+          severity: "warning",
+          message: "No interview results found"
+        });
       }
     } catch (error) {
       console.error("Error fetching interview results:", error);
       setPopup({
         open: true,
         severity: "error",
-        message: "Failed to load interview results",
+        message: "Failed to load interview results"
       });
     } finally {
       setLoadingResults(false);
@@ -532,7 +541,7 @@ const ApplicationTile = (props) => {
                 style={{ backgroundColor: '#6366f1', color: 'white' }}
                 onClick={() => fetchInterviewResults(application._id)}
               >
-                View Interview Results
+                View Interview Results ({application.interviewScore || 0}/100)
               </Button>
             </Grid>
           ) : (
@@ -830,8 +839,11 @@ const JobApplications = (props) => {
         },
       })
       .then((response) => {
-        console.log(response.data);
+        console.log("Applications data:", response.data);
         setApplications(response.data);
+        
+        // Force UI refresh to show updated interview status
+        setFilterOpen(false);
       })
       .catch((err) => {
         console.log(err.response);

@@ -171,19 +171,22 @@ const AudioInterview = () => {
 
   // Helper function to format transcript with proper capitalization and punctuation
   const formatTranscript = (text) => {
-    if (!text) return '';
+    if (!text || text.trim() === '') return '';
+    
+    // Basic cleanup
+    let formatted = text.trim();
     
     // Capitalize first letter of sentences
-    text = text.replace(/(^\s*\w|[.!?]\s*\w)/g, function(c) { 
+    formatted = formatted.replace(/(^\s*\w|[.!?]\s*\w)/g, function(c) { 
       return c.toUpperCase(); 
     });
     
     // Add periods if missing at the end of sentences
-    if (!text.match(/[.!?]$/)) {
-      text = text.trim() + '.';
+    if (!formatted.match(/[.!?]$/)) {
+      formatted += '.';
     }
     
-    return text;
+    return formatted;
   };
 
   // Fetch job details and generate a single question
@@ -233,8 +236,9 @@ const AudioInterview = () => {
       const token = localStorage.getItem('token');
       
       try {
+        // Change the URL to use your local server
         const questionResponse = await axios.post(
-          'https://talented-ai-api.vercel.app/api/get-interview-question',
+          'http://localhost:4444/api/get-interview-question',
           {
             jobTitle: jobData.title,
             skills: jobData.skillsets.join(', '),
@@ -249,9 +253,10 @@ const AudioInterview = () => {
           }
         );
         
+        console.log("Question API response:", questionResponse.data);
         setQuestion(questionResponse.data);
       } catch (error) {
-        console.error('Error generating question:', error);
+        console.error('Error generating question:', error.response || error);
         // Create a fallback question if API fails
         setQuestion({
           question: `Please explain your experience with ${jobData.skillsets[0] || 'this technology'}`,
@@ -270,11 +275,18 @@ const AudioInterview = () => {
       recognition.stop();
       setIsRecording(false);
 
-      // Save the answer
-      setAnswer(transcript);
-
-      // Evaluate the answer
-      evaluateAnswer(transcript);
+      // Save the answer only if it's not empty
+      if (transcript && transcript.trim() !== '') {
+        setAnswer(transcript);
+        // Evaluate the answer
+        evaluateAnswer(transcript);
+      } else {
+        setPopup({
+          open: true,
+          severity: 'warning',
+          message: 'No speech detected. Please try recording again.'
+        });
+      }
     } else {
       setTranscript('');
       recognition.start();
@@ -286,11 +298,28 @@ const AudioInterview = () => {
     try {
       setLoading(true);
       
-      // Ensure answer is properly formatted before sending for evaluation
+      // Ensure answer is properly formatted and not empty before sending for evaluation
       const formattedAnswer = formatTranscript(answer);
       
+      // Check if answer is empty and use a placeholder if it is
+      if (!formattedAnswer || formattedAnswer.trim() === '') {
+        setPopup({
+          open: true,
+          severity: 'error',
+          message: 'Your answer is empty. Please record an answer before proceeding.'
+        });
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Sending answer for evaluation:", {
+        question: question.question,
+        expectedAnswer: question.expectedAnswer,
+        userAnswer: formattedAnswer
+      });
+      
       const response = await axios.post(
-        'https://talented-ai-api.vercel.app/api/evaluate-answer',
+        `${apiList.evaluateAnswer}`,
         {
           question: question.question,
           expectedAnswer: question.expectedAnswer,
@@ -303,12 +332,14 @@ const AudioInterview = () => {
         }
       );
 
+      console.log("Evaluation response:", response.data);
+      
       // Update feedback and score
       setFeedback(response.data.feedback);
       setScore(response.data.score);
 
     } catch (error) {
-      console.error('Error evaluating answer:', error);
+      console.error('Error evaluating answer:', error.response || error);
       setPopup({
         open: true,
         severity: 'error',
@@ -324,6 +355,16 @@ const AudioInterview = () => {
 
   const completeInterview = async () => {
     try {
+      // Check if an answer exists before completing the interview
+      if (!answer || answer.trim() === '') {
+        setPopup({
+          open: true,
+          severity: 'error',
+          message: 'Please provide an answer before completing the interview.'
+        });
+        return;
+      }
+      
       setLoading(true);
       setInterviewComplete(true);
 
@@ -332,30 +373,59 @@ const AudioInterview = () => {
       
       // Save the interview results to the backend
       if (applicationId) {
-        await axios.post(
-          'https://talented-ai-api.vercel.app/api/interview-results',
-          {
-            jobId,
-            applicationId,
-            questions: [question.question],
-            answers: [formattedAnswer],
-            scores: [score],
-            overallScore: score
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
+        try {
+          const response = await axios.post(
+            `${apiList.interviewResults}`,
+            {
+              jobId,
+              applicationId,
+              questions: [question.question],
+              answers: [formattedAnswer],
+              scores: [score],
+              overallScore: score,
+              completedAt: new Date().toISOString()
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json'
+              }
             }
-          }
-        );
+          );
+          
+          console.log("Interview submission response:", response.data);
+          
+          // Update the application to mark the interview as completed
+          await axios.put(
+            `${apiList.applications}/${applicationId}/interview-complete`,
+            { interviewCompleted: true, interviewScore: score },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              }
+            }
+          );
+          
+          setPopup({
+            open: true,
+            severity: "success",
+            message: "Interview completed successfully!"
+          });
+        } catch (submissionError) {
+          console.error('Error submitting interview:', submissionError.response || submissionError);
+          setPopup({
+            open: true,
+            severity: 'error',
+            message: 'Error saving interview results. Your progress has been recorded locally.'
+          });
+        }
       }
     } catch (error) {
       console.error('Error completing interview:', error);
       setPopup({
         open: true,
         severity: 'error',
-        message: 'Error saving interview results. Your progress has been recorded locally.'
+        message: 'Error completing interview. Please try again.'
       });
     } finally {
       setLoading(false);

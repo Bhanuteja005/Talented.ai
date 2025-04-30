@@ -1,4 +1,4 @@
-export const server = "https://talented-ai-api.vercel.app";
+export const server = "http://localhost:4444";
 
 const apiList = {
   login: `${server}/auth/login`,
@@ -10,6 +10,9 @@ const apiList = {
   rating: `${server}/api/rating`,
   user: `${server}/api/user`,
   applicants: `${server}/api/applicants`,
+  interviewResults: `${server}/api/interview-results`,
+  getInterviewQuestion: `${server}/api/get-interview-question`,
+  evaluateAnswer: `${server}/api/evaluate-answer`,
 };
 
 export default apiList;

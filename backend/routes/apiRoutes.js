@@ -1347,7 +1347,7 @@ router.get("/rating", jwtAuth, (req, res) => {
 // Add endpoint to save interview results
 router.post("/interview-results", jwtAuth, async (req, res) => {
   try {
-    const { jobId, applicationId, questions, answers, scores, overallScore } = req.body;
+    const { jobId, applicationId, questions, answers, scores, overallScore, completedAt } = req.body;
     const user = req.user;
     
     // Create a new interview result record
@@ -1360,7 +1360,7 @@ router.post("/interview-results", jwtAuth, async (req, res) => {
       answers,
       scores,
       overallScore,
-      completedAt: new Date()
+      completedAt: completedAt || new Date()
     });
     
     await result.save();
@@ -1385,6 +1385,44 @@ router.post("/interview-results", jwtAuth, async (req, res) => {
     console.log(err);
     res.status(400).json({
       message: "Error saving interview results",
+      success: false,
+    });
+  }
+});
+
+// Add a dedicated endpoint to mark an interview as complete
+router.put("/applications/:id/interview-complete", jwtAuth, async (req, res) => {
+  try {
+    const applicationId = req.params.id;
+    const { interviewCompleted, interviewScore } = req.body;
+    
+    const updatedApplication = await Application.findByIdAndUpdate(
+      applicationId,
+      { 
+        $set: { 
+          interviewCompleted: interviewCompleted, 
+          interviewScore: interviewScore 
+        } 
+      },
+      { new: true }
+    );
+    
+    if (!updatedApplication) {
+      return res.status(404).json({
+        message: "Application not found",
+        success: false
+      });
+    }
+    
+    res.json({
+      message: "Application updated successfully",
+      success: true,
+      application: updatedApplication
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      message: "Error updating application",
       success: false,
     });
   }
