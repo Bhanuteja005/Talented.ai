@@ -43,9 +43,10 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     justifyContent: 'center', // Center content
     transition: 'all 0.3s ease', // Smooth transition
+    flexDirection: 'column', // Always column layout for better transitions
+    alignItems: 'center', // Center align items
     [theme.breakpoints.down('sm')]: {
       gap: '1rem',
-      flexDirection: 'column',
     },
   },
   formContainer: {
@@ -253,22 +254,26 @@ h2: {
   },
 },
 progressContainer: {
-  width: '100%', // Fixed width for progress
+  width: '100%', // Full width
+  maxWidth: '800px', // Increased max width for better display
   padding: '2rem',
   backgroundColor: '#fff',
   borderRadius: '0.5rem',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  transition: 'all 0.3s ease',
+  transition: 'all 0.5s ease',
   opacity: 0,
   visibility: 'hidden',
   height: 0,
+  marginTop: 0,
+  overflow: 'hidden',
   '&.visible': {
     opacity: 1,
     visibility: 'visible',
     height: 'auto',
+    marginTop: '2rem',
   },
   [theme.breakpoints.down('sm')]: {
-    width: '100%',
+    padding: '1rem',
   }
 },
 questionProgress: {
@@ -383,7 +388,8 @@ const SkillAssessmentForm = ({ onStart }) => {
     skillName: '',
     skillLevel: 'beginner',
     exerciseType: 'coding',
-    focusArea: ''
+    focusArea: '',
+    questionCount: 5
   });
 
   const [errors, setErrors] = useState({});
@@ -513,6 +519,21 @@ const SkillAssessmentForm = ({ onStart }) => {
           </select>
         </div>
 
+        <div className={classes.formGroup}>
+          <label className={classes.label}>Number of Questions</label>
+          <select
+            className={classes.input}
+            value={formData.questionCount}
+            onChange={(e) => setFormData({...formData, questionCount: Number(e.target.value)})}
+          >
+            <option value="1">1 Question</option>
+            <option value="3">3 Questions</option>
+            <option value="5">5 Questions</option>
+            <option value="7">7 Questions</option>
+            <option value="10">10 Questions</option>
+          </select>
+        </div>
+
         {errors.submit && (
           <div className={classes.error}>{errors.submit}</div>
         )}
@@ -591,7 +612,7 @@ function SkillAssessmentBot() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [assessmentStarted, setAssessmentStarted] = useState(false);
   const [score, setScore] = useState(0);
-  const [totalQuestions] = useState(5);
+  const [totalQuestions, setTotalQuestions] = useState(5); // Default value, will be overridden
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
   const [questionHistory, setQuestionHistory] = useState([]);
   const [scoreHistory, setScoreHistory] = useState([]);
@@ -600,7 +621,8 @@ function SkillAssessmentBot() {
   const [skillDetails, setSkillDetails] = useState({
     skillName: '',
     skillLevel: '',
-    focusArea: ''
+    focusArea: '',
+    questionCount: 5
   });
 
   const [currentQuestionData, setCurrentQuestionData] = useState(null);
@@ -633,10 +655,11 @@ function SkillAssessmentBot() {
     const startAssessment = async (data) => {
       setSkillDetails(data);
       setAssessmentStarted(true);
+      setTotalQuestions(data.questionCount); // Set the total questions based on user selection
       setMessages([
         {
           type: 'ai',
-          content: `Welcome to your ${data.skillName} skill assessment. Let's begin with the first question.`
+          content: `Welcome to your ${data.skillName} skill assessment. I'll ask you ${data.questionCount} questions to evaluate your knowledge. Let's begin with the first question.`
         }
       ]);
       askQuestion(data);
@@ -734,7 +757,7 @@ const handleAnswer = async (answer) => {
       const finalScore = Math.round((score + numericScore) / totalQuestions);
       setMessages(prev => [...prev, {
         type: 'ai',
-        content: `Interview completed!\n\nFinal Score: ${finalScore}/100`
+        content: `Assessment completed! You've answered all ${totalQuestions} questions.\n\nFinal Score: ${finalScore}/100`
       }]);
     }
   } catch (error) {
@@ -770,14 +793,12 @@ return (
             answeredQuestions={answeredQuestions}
   totalQuestions={totalQuestions}
           />
-          {answeredQuestions === totalQuestions && (
-            <ProgressSummary 
-              questions={questionHistory}
-              scores={scoreHistory}
-              answeredQuestions={answeredQuestions}
+          <ProgressSummary 
+            questions={questionHistory}
+            scores={scoreHistory}
+            answeredQuestions={answeredQuestions}
   totalQuestions={totalQuestions}
-            />
-          )}
+          />
         </>
       )}
     </div>
