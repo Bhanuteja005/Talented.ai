@@ -238,7 +238,7 @@ const AudioInterview = () => {
       try {
         // Change the URL to use your local server
         const questionResponse = await axios.post(
-          'http://localhost:4444/api/get-interview-question',
+          'https://talented-ai-api.vercel.app/api/get-interview-question',
           {
             jobTitle: jobData.title,
             skills: jobData.skillsets.join(', '),
