@@ -139,7 +139,6 @@ const AudioInterview = () => {
   const [recordedChunks, setRecordedChunks] = useState([]);
   const [cameraReady, setCameraReady] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const webcamRef = useRef(null);
   const webcamVideoRef = useRef(null);
   const webcamCanvasRef = useRef(null);
   const webcamInstanceRef = useRef(null);
@@ -332,7 +331,7 @@ const AudioInterview = () => {
         setCameraReady(true);
 
         // Get the stream from the video element after webcam-easy starts
-        stream = webcam.webcam.current.srcObject;
+        stream = webcamVideoRef.current.srcObject;
         if (stream) {
           const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
           mediaRecorderRef.current = recorder;
