@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const jwtAuth = require("../lib/jwtAuth");
+const fileUpload = require('express-fileupload');
+const path = require('path');
 
 const User = require("../db/User");
 const JobApplicant = require("../db/JobApplicant");
@@ -10,6 +12,7 @@ const Application = require("../db/Application");
 const Rating = require("../db/Rating");
 
 const router = express.Router();
+router.use(fileUpload());
 
 // To add new job
 router.post("/jobs", jwtAuth, (req, res) => {
@@ -1347,42 +1350,46 @@ router.get("/rating", jwtAuth, (req, res) => {
 // Add endpoint to save interview results
 router.post("/interview-results", jwtAuth, async (req, res) => {
   try {
-    const { jobId, applicationId, questions, answers, scores, overallScore, completedAt } = req.body;
+    // Use req.body for text fields, req.files for video
+    const { jobId, applicationId, questions, answers, scores, overallScore } = req.body;
     const user = req.user;
-    
-    // Create a new interview result record
+    let videoPath = null;
+
+    if (req.files && req.files.video) {
+      const videoFile = req.files.video;
+      const uploadDir = path.join(__dirname, '../uploads/interviews');
+      if (!require('fs').existsSync(uploadDir)) require('fs').mkdirSync(uploadDir, { recursive: true });
+      const savePath = path.join(uploadDir, `${applicationId}_interview.webm`);
+      await videoFile.mv(savePath);
+      videoPath = `/uploads/interviews/${applicationId}_interview.webm`;
+    }
+
     const InterviewResult = require("../db/InterviewResult");
     const result = new InterviewResult({
       applicationId,
       jobId,
       userId: user._id,
-      questions,
-      answers,
-      scores,
-      overallScore,
-      completedAt: completedAt || new Date()
+      questions: Array.isArray(questions) ? questions : [questions],
+      answers: Array.isArray(answers) ? answers : [answers],
+      scores: Array.isArray(scores) ? scores : [scores],
+      overallScore: overallScore || 0,
+      videoRecording: videoPath,
+      completedAt: new Date()
     });
-    
+
     await result.save();
-    
-    // Update the application status to indicate interview is completed
+
     await Application.findByIdAndUpdate(
       applicationId,
-      { 
-        $set: { 
-          interviewCompleted: true,
-          interviewScore: overallScore 
-        } 
-      }
+      { $set: { interviewCompleted: true, interviewScore: overallScore } }
     );
-    
+
     res.json({
       message: "Interview results saved successfully",
       success: true,
       overallScore
     });
   } catch (err) {
-    console.log(err);
     res.status(400).json({
       message: "Error saving interview results",
       success: false,
@@ -1455,6 +1462,36 @@ router.get("/applications/:id/interview-results", jwtAuth, async (req, res) => {
       success: false,
     });
   }
+});
+
+// Resume upload endpoint (example)
+router.post("/upload/resume", jwtAuth, async (req, res) => {
+  try {
+    if (!req.files || !req.files.resume) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const resumeFile = req.files.resume;
+    const filename = `${req.user._id}_${Date.now()}_${resumeFile.name}`;
+    const uploadPath = path.join(__dirname, "../uploads/resume", filename);
+
+    await resumeFile.mv(uploadPath);
+
+    // Update JobApplicantInfo with resume filename
+    await JobApplicant.findOneAndUpdate(
+      { userId: req.user._id },
+      { $set: { resume: filename } }
+    );
+
+    res.json({ message: "Resume uploaded successfully", filename });
+  } catch (err) {
+    res.status(500).json({ message: "Resume upload failed" });
+  }
+});
+
+// Resume download endpoint (example)
+router.get("/download/resume/:filename", (req, res) => {
+  const filePath = path.join(__dirname, "../uploads/resume", req.params.filename);
+  res.download(filePath);
 });
 
 // Application.findOne({

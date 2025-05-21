@@ -36,6 +36,10 @@ const interviewResultSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  videoRecording: {
+    type: String,
+    default: null,
+  },
   completedAt: {
     type: Date,
     default: Date.now,
