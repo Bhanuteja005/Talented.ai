@@ -4,6 +4,7 @@ import { Mic, Stop, VolumeUp } from '@material-ui/icons';
 import axios from 'axios';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import Webcam from "webcam-easy";
 import { SetPopupContext } from '../App';
 import apiList from '../lib/apiList';
 
@@ -138,6 +139,11 @@ const AudioInterview = () => {
   const [recordedChunks, setRecordedChunks] = useState([]);
   const [cameraReady, setCameraReady] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const webcamRef = useRef(null);
+  const webcamVideoRef = useRef(null);
+  const webcamCanvasRef = useRef(null);
+  const webcamInstanceRef = useRef(null);
+  const [mediaRecorderReady, setMediaRecorderReady] = useState(false);
   
   const classes = useStyles({ isRecording });
 
@@ -302,54 +308,52 @@ const AudioInterview = () => {
     }
   };
 
-  // Initialize camera and video recording
+  // Initialize camera using webcam-easy and set up MediaRecorder
   useEffect(() => {
+    let webcam;
     let stream = null;
-
     let didCancel = false;
 
     const setupCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: "user" },
-          audio: true,
-        });
-
-        if (didCancel) {
-          stream.getTracks().forEach(track => track.stop());
+        // Wait for DOM to render video/canvas elements
+        if (!webcamVideoRef.current || !webcamCanvasRef.current) {
+          // Try again on next tick if refs are not ready
+          setTimeout(setupCamera, 100);
           return;
         }
-
-        // Assign stream to video element
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current.play()
-              .then(() => setCameraReady(true))
-              .catch(e => {
-                setCameraReady(false);
-                setError("Failed to start video playback. Please reload the page.");
-              });
-          };
+        webcam = new Webcam(webcamVideoRef.current, "user", webcamCanvasRef.current);
+        webcamInstanceRef.current = webcam;
+        await webcam.start();
+        if (didCancel) {
+          webcam.stop();
+          return;
         }
+        setCameraReady(true);
 
-        // Create MediaRecorder instance
-        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        mediaRecorderRef.current = recorder;
+        // Get the stream from the video element after webcam-easy starts
+        stream = webcam.webcam.current.srcObject;
+        if (stream) {
+          const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+          mediaRecorderRef.current = recorder;
+          setMediaRecorderReady(true);
 
-        recorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            setRecordedChunks(prev => [...prev, event.data]);
-          }
-        };
+          recorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) {
+              setRecordedChunks(prev => [...prev, event.data]);
+            }
+          };
 
-        recorder.onerror = (event) => {
-          setError("Error recording video: " + event.error);
-        };
-
+          recorder.onerror = (event) => {
+            setError("Error recording video: " + event.error);
+          };
+        } else {
+          setMediaRecorderReady(false);
+        }
       } catch (err) {
         setError("Camera/Microphone access error: " + err.message + ". Please check your camera permissions and refresh the page.");
         setCameraReady(false);
+        setMediaRecorderReady(false);
       }
     };
 
@@ -357,8 +361,8 @@ const AudioInterview = () => {
 
     return () => {
       didCancel = true;
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      if (webcamInstanceRef.current) {
+        webcamInstanceRef.current.stop();
       }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
@@ -395,8 +399,8 @@ const AudioInterview = () => {
       setTranscript('');
       setRecordedChunks([]);
       
-      // Start MediaRecorder
-      if (mediaRecorderRef.current) {
+      // Only start if mediaRecorder is ready
+      if (mediaRecorderRef.current && mediaRecorderReady) {
         try {
           mediaRecorderRef.current.start(1000); // Record in 1-second chunks
           console.log("Starting media recorder");
@@ -413,7 +417,7 @@ const AudioInterview = () => {
         setPopup({
           open: true,
           severity: 'error',
-          message: 'Video recorder not ready. Please refresh the page.'
+          message: 'Video recorder not ready. Please wait for the camera to load before starting recording.'
         });
         return;
       }
@@ -651,19 +655,30 @@ const AudioInterview = () => {
               Camera Preview {isRecording ? '(Recording...)' : '(Ready to record)'}
             </Typography>
             <div className={classes.videoContainer}>
-              <video 
-                ref={videoRef} 
+              {/* Webcam Easy video and canvas elements */}
+              <video
+                ref={webcamVideoRef}
+                id="webcam"
                 className={classes.videoElement}
-                autoPlay 
-                muted 
+                autoPlay
                 playsInline
+                muted
+                width={640}
+                height={480}
+              />
+              <canvas
+                ref={webcamCanvasRef}
+                id="canvas"
+                style={{ display: "none" }}
+                width={640}
+                height={480}
               />
               {isRecording && <div className={classes.recordingIndicator}></div>}
               {!cameraReady && (
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  left: '50%', 
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
                   transform: 'translate(-50%, -50%)',
                   color: 'white',
                   textAlign: 'center'
