@@ -1,21 +1,10 @@
 import { Avatar, CircularProgress, LinearProgress, Typography } from '@material-ui/core';
-import { createTheme, makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import { Android, Person } from '@material-ui/icons';
-import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const theme = createTheme({
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 960,
-      lg: 1280,
-      xl: 1920,
-    },
-  },
-});
+
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -204,11 +193,7 @@ messageRowReverse: {
   flexDirection: 'row-reverse',
 },
 
-messageContent: {
-  display: 'flex',
-  flexDirection: 'column',
-  maxWidth: '70%',
-},
+
 
 messageAvatar: {
   width: '40px',
@@ -229,12 +214,7 @@ userAvatar: {
   backgroundColor: '#10b981',
 },
 
-messageBox: {
-  padding: '1rem',
-  borderRadius: '0.5rem',
-  maxWidth: '100%',
-  wordBreak: 'break-word',
-},
+
 
 aiMessage: {
   backgroundColor: '#f3f4f6',
@@ -626,7 +606,6 @@ function SkillAssessmentBot() {
   });
 
   const [currentQuestionData, setCurrentQuestionData] = useState(null);
-  const navigate = useNavigate();
   const fetchWithRetry = async (url, options, maxRetries = 3) => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {

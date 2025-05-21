@@ -2,7 +2,7 @@ import { Box, Button, CircularProgress, Paper, Typography } from '@material-ui/c
 import { makeStyles } from '@material-ui/core/styles';
 import { Mic, Stop, VolumeUp } from '@material-ui/icons';
 import axios from 'axios';
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SetPopupContext } from '../App';
 import apiList from '../lib/apiList';
@@ -85,7 +85,37 @@ const useStyles = makeStyles((theme) => ({
   },
   voiceButton: {
     marginLeft: theme.spacing(2),
-  }
+  },
+  videoContainer: {
+    width: '100%',
+    maxWidth: '640px',
+    height: '360px',
+    margin: '0 auto',
+    backgroundColor: '#000',
+    overflow: 'hidden',
+    borderRadius: '4px',
+    position: 'relative',
+  },
+  videoElement: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  recordingIndicator: {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    backgroundColor: 'red',
+    animation: '$blink 1s infinite',
+  },
+  '@keyframes blink': {
+    '0%': { opacity: 1 },
+    '50%': { opacity: 0.4 },
+    '100%': { opacity: 1 },
+  },
 }));
 
 const AudioInterview = () => {
@@ -103,6 +133,11 @@ const AudioInterview = () => {
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const [error, setError] = useState(null);
+  const videoRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const [recordedChunks, setRecordedChunks] = useState([]);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   
   const classes = useStyles({ isRecording });
 
@@ -124,13 +159,10 @@ const AudioInterview = () => {
     
     recognitionInstance.onresult = (event) => {
       let interimTranscript = '';
-      
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           finalTranscript += transcript + ' ';
-        } else {
-          interimTranscript += transcript;
         }
       }
       
@@ -270,10 +302,81 @@ const AudioInterview = () => {
     }
   };
 
+  // Initialize camera and video recording
+  useEffect(() => {
+    let stream = null;
+
+    let didCancel = false;
+
+    const setupCamera = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: "user" },
+          audio: true,
+        });
+
+        if (didCancel) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
+        // Assign stream to video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play()
+              .then(() => setCameraReady(true))
+              .catch(e => {
+                setCameraReady(false);
+                setError("Failed to start video playback. Please reload the page.");
+              });
+          };
+        }
+
+        // Create MediaRecorder instance
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        mediaRecorderRef.current = recorder;
+
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            setRecordedChunks(prev => [...prev, event.data]);
+          }
+        };
+
+        recorder.onerror = (event) => {
+          setError("Error recording video: " + event.error);
+        };
+
+      } catch (err) {
+        setError("Camera/Microphone access error: " + err.message + ". Please check your camera permissions and refresh the page.");
+        setCameraReady(false);
+      }
+    };
+
+    setupCamera();
+
+    return () => {
+      didCancel = true;
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
+
   const toggleRecording = () => {
     if (isRecording) {
-      recognition.stop();
+      // Stop recording
+      if (recognition) recognition.stop();
       setIsRecording(false);
+      
+      // Stop MediaRecorder
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        console.log("Stopping media recorder");
+      }
 
       // Save the answer only if it's not empty
       if (transcript && transcript.trim() !== '') {
@@ -288,8 +391,36 @@ const AudioInterview = () => {
         });
       }
     } else {
+      // Start recording
       setTranscript('');
-      recognition.start();
+      setRecordedChunks([]);
+      
+      // Start MediaRecorder
+      if (mediaRecorderRef.current) {
+        try {
+          mediaRecorderRef.current.start(1000); // Record in 1-second chunks
+          console.log("Starting media recorder");
+        } catch (e) {
+          console.error("Error starting media recorder:", e);
+          setPopup({
+            open: true,
+            severity: 'error',
+            message: 'Failed to start video recording. Please refresh the page.'
+          });
+          return;
+        }
+      } else {
+        setPopup({
+          open: true,
+          severity: 'error',
+          message: 'Video recorder not ready. Please refresh the page.'
+        });
+        return;
+      }
+      
+      // Start speech recognition
+      if (recognition) recognition.start();
+      
       setIsRecording(true);
     }
   };
@@ -371,54 +502,73 @@ const AudioInterview = () => {
       // Format the answer before submission
       const formattedAnswer = formatTranscript(answer);
       
-      // Save the interview results to the backend
-      if (applicationId) {
-        try {
-          const response = await axios.post(
-            `${apiList.interviewResults}`,
-            {
-              jobId,
-              applicationId,
-              questions: [question.question],
-              answers: [formattedAnswer],
-              scores: [score],
-              overallScore: score,
-              completedAt: new Date().toISOString()
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                'Content-Type': 'application/json'
-              }
+      // Prepare video blob if we have chunks
+      let videoBlob = null;
+      if (recordedChunks.length > 0) {
+        videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        console.log("Created video blob of size:", videoBlob.size, "bytes");
+      } else {
+        console.warn("No video chunks recorded");
+      }
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('jobId', jobId);
+      formData.append('applicationId', applicationId);
+      formData.append('questions', question.question);
+      formData.append('answers', formattedAnswer);
+      formData.append('scores', score);
+      formData.append('overallScore', score);
+      
+      if (videoBlob && videoBlob.size > 0) {
+        formData.append('video', videoBlob, 'interview.webm');
+        console.log("Added video to form data");
+      } else {
+        console.warn("No video blob to upload");
+        setPopup({
+          open: true,
+          severity: 'warning',
+          message: 'No video was recorded. Only your text answer will be submitted.'
+        });
+      }
+
+      try {
+        const response = await axios.post(
+          `${apiList.interviewResults}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              'Content-Type': 'multipart/form-data'
             }
-          );
-          
-          console.log("Interview submission response:", response.data);
-          
-          // Update the application to mark the interview as completed
-          await axios.put(
-            `${apiList.applications}/${applicationId}/interview-complete`,
-            { interviewCompleted: true, interviewScore: score },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              }
+          }
+        );
+        
+        console.log("Interview submission response:", response.data);
+        
+        // Update the application to mark the interview as completed
+        await axios.put(
+          `${apiList.applications}/${applicationId}/interview-complete`,
+          { interviewCompleted: true, interviewScore: score },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
             }
-          );
-          
-          setPopup({
-            open: true,
-            severity: "success",
-            message: "Interview completed successfully!"
-          });
-        } catch (submissionError) {
-          console.error('Error submitting interview:', submissionError.response || submissionError);
-          setPopup({
-            open: true,
-            severity: 'error',
-            message: 'Error saving interview results. Your progress has been recorded locally.'
-          });
-        }
+          }
+        );
+        
+        setPopup({
+          open: true,
+          severity: "success",
+          message: "Interview completed successfully!"
+        });
+      } catch (submissionError) {
+        console.error('Error submitting interview:', submissionError.response || submissionError);
+        setPopup({
+          open: true,
+          severity: 'error',
+          message: 'Error saving interview results. Your progress has been recorded locally.'
+        });
       }
     } catch (error) {
       console.error('Error completing interview:', error);
@@ -434,11 +584,16 @@ const AudioInterview = () => {
 
   const speakQuestion = () => {
     if ('speechSynthesis' in window) {
+      // Stop any ongoing speech first
+      window.speechSynthesis.cancel();
       const speech = new SpeechSynthesisUtterance();
       speech.text = question?.question || '';
       speech.lang = 'en-US';
       speech.rate = 1;
       speech.pitch = 1;
+      setIsSpeaking(true);
+      speech.onend = () => setIsSpeaking(false);
+      speech.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(speech);
     } else {
       setPopup({
@@ -446,6 +601,13 @@ const AudioInterview = () => {
         severity: 'error',
         message: 'Text-to-speech is not supported in your browser.'
       });
+    }
+  };
+
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
   };
 
@@ -485,6 +647,41 @@ const AudioInterview = () => {
       {!interviewComplete ? (
         <>
           <Paper className={classes.questionCard}>
+            <Typography variant="subtitle1" style={{ marginBottom: '10px' }}>
+              Camera Preview {isRecording ? '(Recording...)' : '(Ready to record)'}
+            </Typography>
+            <div className={classes.videoContainer}>
+              <video 
+                ref={videoRef} 
+                className={classes.videoElement}
+                autoPlay 
+                muted 
+                playsInline
+              />
+              {isRecording && <div className={classes.recordingIndicator}></div>}
+              {!cameraReady && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: '50%', 
+                  transform: 'translate(-50%, -50%)',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <CircularProgress color="secondary" size={40} />
+                  <Typography variant="body2" style={{ marginTop: 10 }}>
+                    Loading camera...
+                  </Typography>
+                </div>
+              )}
+            </div>
+            {!cameraReady && (
+              <Typography variant="body2" color="error" style={{ marginTop: 10, textAlign: 'center' }}>
+                If your camera doesn't appear, please check your browser permissions and make sure your camera is connected.
+              </Typography>
+            )}
+          </Paper>
+          <Paper className={classes.questionCard}>
             <Typography className={classes.questionPrompt}>
               {question?.question || 'Loading question...'}
             </Typography>
@@ -492,9 +689,9 @@ const AudioInterview = () => {
               startIcon={<VolumeUp />} 
               variant="outlined"
               className={classes.voiceButton}
-              onClick={speakQuestion}
+              onClick={isSpeaking ? stopSpeaking : speakQuestion}
             >
-              Listen
+              {isSpeaking ? 'Stop' : 'Listen'}
             </Button>
           </Paper>
 
@@ -509,7 +706,7 @@ const AudioInterview = () => {
                 className={classes.recordButton}
                 startIcon={isRecording ? <Stop /> : <Mic />}
                 onClick={toggleRecording}
-                disabled={loading}
+                disabled={loading || !cameraReady}
               >
                 {isRecording ? 'Stop Recording' : 'Start Recording'}
               </Button>

@@ -1,16 +1,16 @@
 import {
-  Avatar,
-  Button,
-  Checkbox,
-  Chip,
-  CircularProgress,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  makeStyles,
-  Modal,
-  Paper,
-  Typography,
+    Avatar,
+    Button,
+    Checkbox,
+    Chip,
+    CircularProgress,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    makeStyles,
+    Modal,
+    Paper,
+    Typography,
 } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
@@ -745,6 +745,19 @@ const ApplicationTile = (props) => {
                   </Typography>
                 </Paper>
               ))}
+              
+              {interviewResult.videoRecording && (
+                <div style={{ margin: '20px 0' }}>
+                  <Typography variant="subtitle1" style={{ marginBottom: '10px', fontWeight: 'bold' }}>
+                    Interview Recording:
+                  </Typography>
+                  <video 
+                    controls 
+                    style={{ width: '100%', maxHeight: '320px', backgroundColor: '#000' }}
+                    src={`${server}${interviewResult.videoRecording}`}
+                  />
+                </div>
+              )}
               
               <Typography variant="body2" style={{ marginTop: '15px', color: '#666' }}>
                 Interview completed on: {new Date(interviewResult.completedAt).toLocaleString()}

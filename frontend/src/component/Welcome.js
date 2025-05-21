@@ -1,6 +1,5 @@
 import { Typography } from "@material-ui/core";
 import { motion } from "framer-motion";
-import React from "react";
 import styled from "styled-components";
 import Hero from "../assets/Hero.png";
 import { useAnimations } from "../Hooks/useAnimations";
@@ -116,26 +115,6 @@ const SectionContainer = styled.div`
 
 const Welcome = () => {
   const { heroPictureAnimation, titleAnimation, lineContainerAnimation, heroStagger } = useAnimations();
-
-  {/*useEffect(() => {
-    const script1 = document.createElement("script");
-    script1.src = "https://storage.googleapis.com/chipp-chat-widget-assets/build/bundle.js";
-    script1.defer = true;
-    document.body.appendChild(script1);
-
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://storage.googleapis.com/chipp-chat-widget-assets/build/bundle.css";
-    document.head.appendChild(link);
-
-    window.CHIPP_APP_URL = "https://talentedai-15534.chipp.ai";
-    window.CHIPP_APP_ID = 15534;
-
-    return () => {
-      document.body.removeChild(script1);
-      document.head.removeChild(link);
-    };
-  }, []);*/}
 
   return (
     <>

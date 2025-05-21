@@ -1,14 +1,13 @@
-import { useContext, useEffect, useState } from "react";
 import {
   Button,
   Grid,
-  Typography,
-  Modal,
-  Paper,
   makeStyles,
+  Paper,
   TextField,
+  Typography,
 } from "@material-ui/core";
 import axios from "axios";
+import { useCallback, useContext, useEffect, useState } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 
@@ -48,11 +47,7 @@ const Profile = (props) => {
     });
   };
 
-  useEffect(() => {
-    getData();
-  }, []);
-
-  const getData = () => {
+  const getData = useCallback(() => {
     axios
       .get(apiList.user, {
         headers: {
@@ -72,7 +67,11 @@ const Profile = (props) => {
           message: "Error",
         });
       });
-  };
+  }, [setPopup]);
+
+  useEffect(() => {
+    getData();
+  }, [getData]);
 
   const handleUpdate = () => {
     let updatedDetails = {
@@ -161,7 +160,7 @@ const Profile = (props) => {
                   onChange={(event) => {
                     if (
                       event.target.value.split(" ").filter(function (n) {
-                        return n != "";
+                        return n !== "";
                       }).length <= 250
                     ) {
                       handleInput("bio", event.target.value);

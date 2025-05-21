@@ -21,10 +21,9 @@ import PersonIcon from "@material-ui/icons/Person";
 import PersonAddIcon from "@material-ui/icons/PersonAdd";
 import WorkIcon from "@material-ui/icons/Work";
 import { motion, useAnimation } from "framer-motion";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { useAnimations } from "../Hooks/useAnimations";
 import isAuth, { userType } from "../lib/isAuth";
 
 const useStyles = makeStyles((theme) => ({
@@ -83,7 +82,6 @@ const Navbar = (props) => {
   const classes = useStyles();
   const navigate = useNavigate();
   const controls = useAnimation();
-  const { staggerChildrenAnimation } = useAnimations();
   const [isHovered, setIsHovered] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();

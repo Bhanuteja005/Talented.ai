@@ -1,18 +1,18 @@
 import {
-    Button,
-    Checkbox,
-    Chip,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    InputAdornment,
-    makeStyles,
-    MenuItem,
-    Modal,
-    Paper,
-    Slider,
-    TextField,
-    Typography,
+  Button,
+  Checkbox,
+  Chip,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputAdornment,
+  makeStyles,
+  MenuItem,
+  Modal,
+  Paper,
+  Slider,
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
@@ -31,10 +31,6 @@ const useStyles = makeStyles((theme) => ({
   body: {
     height: "inherit",
   },
-  button: {
-    width: "100%",
-    height: "100%",
-  },
   jobTileOuter: {
     padding: "30px",
     margin: "20px 0",
@@ -48,6 +44,8 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   button: {
+    width: "100%",
+    height: "100%",
     marginTop:'90px',
     padding: '5px 15px',
     fontSize: '0.875rem',
