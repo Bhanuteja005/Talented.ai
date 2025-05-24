@@ -53,6 +53,10 @@ let schema = new mongoose.Schema(
     resume: {
       type: String,
     },
+    resumeFileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "uploads.files", // Reference to GridFS files collection
+    },
     profile: {
       type: String,
     },

@@ -122,6 +122,14 @@ const Profile = (props) => {
     },
   ]);
 
+  const [profileData, setProfileData] = useState({
+    name: "",
+    education: [],
+    skills: [],
+    resume: "",
+    profile: "",
+  });
+
   const handleInput = (key, value) => {
     setProfileDetails({
       ...profileDetails,
@@ -161,7 +169,14 @@ const Profile = (props) => {
 
   useEffect(() => {
     getData();
-  }, [getData]);
+  }, []);
+
+  useEffect(() => {
+    if (profileDetails) {
+      setProfileData(profileDetails);
+      console.log("Profile details loaded:", profileDetails);
+    }
+  }, [profileDetails]);
 
   const handleUpdate = () => {
     console.log(education);
@@ -203,14 +218,17 @@ const Profile = (props) => {
   };
 
   return (
-    <>
-      <Grid
-        container
-        item
-        direction="column"
-        alignItems="center"
-        style={{ padding: "30px", minHeight: "93vh" }}
-      >
+    <Paper
+      style={{
+        padding: "50px",
+        outline: "none",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Grid container direction="column" alignItems="center" spacing={3}>
         <Grid item>
           <Typography variant="h2">Profile</Typography>
         </Grid>
@@ -272,6 +290,7 @@ const Profile = (props) => {
                   uploadTo={apiList.uploadResume}
                   handleInput={handleInput}
                   identifier={"resume"}
+                  initialValue={profileData.resume} // Pass existing resume filename
                 />
               </Grid>
               <Grid item>
@@ -296,7 +315,7 @@ const Profile = (props) => {
           </Paper>
         </Grid>
       </Grid>
-    </>
+    </Paper>
   );
 };
 

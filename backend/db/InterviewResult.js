@@ -40,6 +40,11 @@ const interviewResultSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  videoFileId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+    ref: 'uploads.files' // Reference to GridFS files collection
+  },
   completedAt: {
     type: Date,
     default: Date.now,

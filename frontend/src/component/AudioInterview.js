@@ -155,25 +155,59 @@ const AudioInterview = () => {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognitionInstance = new SpeechRecognition();
-    recognitionInstance.continuous = false; // Fix: set to false to avoid duplicate results
-    recognitionInstance.interimResults = false; // Fix: only get final results
+    recognitionInstance.continuous = true; // Changed to true for better recording
+    recognitionInstance.interimResults = true; // Changed to true to see real-time results
     recognitionInstance.lang = 'en-US';
+    recognitionInstance.maxAlternatives = 1;
+
+    let finalTranscript = '';
+    let interimTranscript = '';
 
     recognitionInstance.onresult = (event) => {
-      // Only take the last final result to avoid duplicates
-      let finalTranscript = '';
+      finalTranscript = '';
+      interimTranscript = '';
+
+      // Process all results from the current session
       for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript + ' ';
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
         }
       }
-      finalTranscript = formatTranscript(finalTranscript);
-      setTranscript(finalTranscript.trim());
+
+      // Update the display with final + interim results
+      const fullTranscript = finalTranscript + interimTranscript;
+      setTranscript(formatTranscript(fullTranscript.trim()));
+    };
+
+    recognitionInstance.onstart = () => {
+      console.log('Speech recognition started');
+      finalTranscript = '';
+      interimTranscript = '';
+      setTranscript(''); // Clear previous transcript
+    };
+
+    recognitionInstance.onend = () => {
+      console.log('Speech recognition ended');
+      if (isRecording) {
+        // If we're still supposed to be recording, restart recognition
+        setTimeout(() => {
+          if (isRecording && recognitionInstance) {
+            try {
+              recognitionInstance.start();
+            } catch (e) {
+              console.log('Recognition restart failed:', e);
+            }
+          }
+        }, 100);
+      }
     };
 
     recognitionInstance.onerror = (event) => {
       console.error('Speech recognition error', event.error);
-      setIsRecording(false);
+      
       let errorMessage = 'Speech recognition error';
       if (event.error === 'no-speech') {
         errorMessage = 'No speech was detected. Please try again.';
@@ -181,7 +215,11 @@ const AudioInterview = () => {
         errorMessage = 'Audio capture failed. Please check your microphone.';
       } else if (event.error === 'not-allowed') {
         errorMessage = 'Microphone access was denied. Please allow microphone access.';
+      } else if (event.error === 'aborted') {
+        // Don't show error for aborted recognition (user stopped)
+        return;
       }
+      
       setPopup({
         open: true,
         severity: 'error',
@@ -193,7 +231,11 @@ const AudioInterview = () => {
 
     return () => {
       if (recognitionInstance) {
-        recognitionInstance.stop();
+        try {
+          recognitionInstance.stop();
+        } catch (e) {
+          console.log('Error stopping recognition:', e);
+        }
       }
     };
   }, [setPopup]);
@@ -364,8 +406,16 @@ const AudioInterview = () => {
   const toggleRecording = () => {
     if (isRecording) {
       // Stop recording
-      if (recognition) recognition.stop();
+      console.log('Stopping recording...');
       setIsRecording(false);
+      
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (e) {
+          console.log('Error stopping recognition:', e);
+        }
+      }
       
       // Stop MediaRecorder
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -373,25 +423,42 @@ const AudioInterview = () => {
         console.log("Stopping media recorder");
       }
 
-      // Save the answer only if it's not empty
-      if (transcript && transcript.trim() !== '') {
-        setAnswer(transcript);
-        // Evaluate the answer
-        evaluateAnswer(transcript);
-      } else {
-        setPopup({
-          open: true,
-          severity: 'warning',
-          message: 'No speech detected. Please try recording again.'
-        });
-      }
+      // Process the final answer
+      setTimeout(() => {
+        const finalAnswer = transcript.trim();
+        if (finalAnswer && finalAnswer !== '') {
+          setAnswer(finalAnswer);
+          evaluateAnswer(finalAnswer);
+        } else {
+          setPopup({
+            open: true,
+            severity: 'warning',
+            message: 'No speech detected. Please try recording again.'
+          });
+        }
+      }, 500); // Small delay to ensure recognition has finished
+
     } else {
       // Start recording
+      console.log('Starting recording...');
       setTranscript('');
+      setAnswer('');
+      setFeedback('');
+      setScore(0);
       setRecordedChunks([]);
       
-      // Only start if mediaRecorder is ready
-      if (mediaRecorderRef.current && mediaRecorderReady) {
+      // Check if camera and microphone are ready
+      if (!cameraReady || !mediaRecorderReady) {
+        setPopup({
+          open: true,
+          severity: 'error',
+          message: 'Camera or microphone not ready. Please wait and try again.'
+        });
+        return;
+      }
+      
+      // Start MediaRecorder first
+      if (mediaRecorderRef.current) {
         try {
           mediaRecorderRef.current.start(1000); // Record in 1-second chunks
           console.log("Starting media recorder");
@@ -404,17 +471,22 @@ const AudioInterview = () => {
           });
           return;
         }
-      } else {
-        setPopup({
-          open: true,
-          severity: 'error',
-          message: 'Video recorder not ready. Please wait for the camera to load before starting recording.'
-        });
-        return;
       }
       
       // Start speech recognition
-      if (recognition) recognition.start();
+      if (recognition) {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error("Error starting speech recognition:", e);
+          setPopup({
+            open: true,
+            severity: 'error',
+            message: 'Failed to start speech recognition. Please try again.'
+          });
+          return;
+        }
+      }
       
       setIsRecording(true);
     }
@@ -489,14 +561,20 @@ const AudioInterview = () => {
         });
         return;
       }
+      
       setLoading(true);
-      setInterviewComplete(true);
-
+      
       const formattedAnswer = formatTranscript(answer);
+      console.log('Submitting interview with answer:', formattedAnswer);
+      console.log('Recorded chunks count:', recordedChunks.length);
 
+      // Create video blob if we have recorded chunks
       let videoBlob = null;
       if (recordedChunks.length > 0) {
         videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        console.log('Video blob size:', videoBlob.size, 'bytes');
+      } else {
+        console.log('No video chunks recorded');
       }
 
       const formData = new FormData();
@@ -504,14 +582,19 @@ const AudioInterview = () => {
       formData.append('applicationId', applicationId);
       formData.append('questions', question.question);
       formData.append('answers', formattedAnswer);
-      formData.append('scores', score);
-      formData.append('overallScore', score);
+      formData.append('scores', score.toString());
+      formData.append('overallScore', score.toString());
+      
       if (videoBlob && videoBlob.size > 0) {
         formData.append('video', videoBlob, 'interview.webm');
+        console.log('Video attached to form data');
+      } else {
+        console.log('No video to attach');
       }
 
+      console.log('Sending interview results to:', apiList.interviewResults);
+
       try {
-        // Fix: Use the correct API endpoint and check for backend errors
         const response = await axios.post(
           apiList.interviewResults,
           formData,
@@ -523,29 +606,40 @@ const AudioInterview = () => {
           }
         );
 
-        if (response.data && response.data.success) {
-          await axios.put(
-            `${apiList.applications}/${applicationId}/interview-complete`,
-            { interviewCompleted: true, interviewScore: score },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              }
-            }
-          );
-          setPopup({
-            open: true,
-            severity: "success",
-            message: "Interview completed successfully!"
-          });
-        } else {
-          throw new Error(response.data && response.data.message ? response.data.message : "Unknown error");
+        console.log('Interview submission response:', response.data);
+
+        if (!response.data || response.data.success === false) {
+          throw new Error(response.data?.message || "Failed to save interview results");
         }
+
+        // Update application status
+        await axios.put(
+          `${apiList.applications}/${applicationId}/interview-complete`,
+          { 
+            interviewCompleted: true, 
+            interviewScore: score 
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            }
+          }
+        );
+
+        setInterviewComplete(true);
+        setPopup({
+          open: true,
+          severity: "success",
+          message: "Interview completed and saved successfully!"
+        });
+
       } catch (submissionError) {
-        // Show backend error message if available
-        let msg = 'Error saving interview results. Your progress has been recorded locally.';
-        if (submissionError.response && submissionError.response.data && submissionError.response.data.message) {
+        console.error('Interview submission error:', submissionError);
+        let msg = 'Error saving interview results.';
+        if (submissionError.response?.data?.message) {
           msg = submissionError.response.data.message;
+        } else if (submissionError.message) {
+          msg = submissionError.message;
         }
         setPopup({
           open: true,
@@ -554,6 +648,7 @@ const AudioInterview = () => {
         });
       }
     } catch (error) {
+      console.error('Complete interview error:', error);
       setPopup({
         open: true,
         severity: 'error',

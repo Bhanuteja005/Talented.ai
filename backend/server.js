@@ -90,7 +90,7 @@ app.use(passportConfig.initialize());
 // Routing
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/api", require("./routes/apiRoutes"));
-app.use("/upload", require("./routes/uploadRoutes"));
+app.use("/uploads", require("./routes/uploadRoutes"));
 app.use("/host", require("./routes/downloadRoutes"));
 
 // Route to indicate server is running
