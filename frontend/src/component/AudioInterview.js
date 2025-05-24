@@ -155,32 +155,25 @@ const AudioInterview = () => {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognitionInstance = new SpeechRecognition();
-    recognitionInstance.continuous = true;
-    recognitionInstance.interimResults = true;
+    recognitionInstance.continuous = false; // Fix: set to false to avoid duplicate results
+    recognitionInstance.interimResults = false; // Fix: only get final results
     recognitionInstance.lang = 'en-US';
 
-    // Better transcript handling with proper formatting
-    let finalTranscript = '';
-    
     recognitionInstance.onresult = (event) => {
-      let interimTranscript = '';
+      // Only take the last final result to avoid duplicates
+      let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcript + ' ';
+          finalTranscript += event.results[i][0].transcript + ' ';
         }
       }
-      
-      // Format with proper capitalization and punctuation
       finalTranscript = formatTranscript(finalTranscript);
-      setTranscript(finalTranscript);
+      setTranscript(finalTranscript.trim());
     };
 
     recognitionInstance.onerror = (event) => {
       console.error('Speech recognition error', event.error);
       setIsRecording(false);
-      
-      // More helpful error messages
       let errorMessage = 'Speech recognition error';
       if (event.error === 'no-speech') {
         errorMessage = 'No speech was detected. Please try again.';
@@ -189,7 +182,6 @@ const AudioInterview = () => {
       } else if (event.error === 'not-allowed') {
         errorMessage = 'Microphone access was denied. Please allow microphone access.';
       }
-      
       setPopup({
         open: true,
         severity: 'error',
@@ -489,7 +481,6 @@ const AudioInterview = () => {
 
   const completeInterview = async () => {
     try {
-      // Check if an answer exists before completing the interview
       if (!answer || answer.trim() === '') {
         setPopup({
           open: true,
@@ -498,23 +489,16 @@ const AudioInterview = () => {
         });
         return;
       }
-      
       setLoading(true);
       setInterviewComplete(true);
 
-      // Format the answer before submission
       const formattedAnswer = formatTranscript(answer);
-      
-      // Prepare video blob if we have chunks
+
       let videoBlob = null;
       if (recordedChunks.length > 0) {
         videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-        console.log("Created video blob of size:", videoBlob.size, "bytes");
-      } else {
-        console.warn("No video chunks recorded");
       }
 
-      // Prepare form data
       const formData = new FormData();
       formData.append('jobId', jobId);
       formData.append('applicationId', applicationId);
@@ -522,22 +506,14 @@ const AudioInterview = () => {
       formData.append('answers', formattedAnswer);
       formData.append('scores', score);
       formData.append('overallScore', score);
-      
       if (videoBlob && videoBlob.size > 0) {
         formData.append('video', videoBlob, 'interview.webm');
-        console.log("Added video to form data");
-      } else {
-        console.warn("No video blob to upload");
-        setPopup({
-          open: true,
-          severity: 'warning',
-          message: 'No video was recorded. Only your text answer will be submitted.'
-        });
       }
 
       try {
+        // Fix: Use the correct API endpoint and check for backend errors
         const response = await axios.post(
-          `${apiList.interviewResults}`,
+          apiList.interviewResults,
           formData,
           {
             headers: {
@@ -546,35 +522,38 @@ const AudioInterview = () => {
             }
           }
         );
-        
-        console.log("Interview submission response:", response.data);
-        
-        // Update the application to mark the interview as completed
-        await axios.put(
-          `${apiList.applications}/${applicationId}/interview-complete`,
-          { interviewCompleted: true, interviewScore: score },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+
+        if (response.data && response.data.success) {
+          await axios.put(
+            `${apiList.applications}/${applicationId}/interview-complete`,
+            { interviewCompleted: true, interviewScore: score },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              }
             }
-          }
-        );
-        
-        setPopup({
-          open: true,
-          severity: "success",
-          message: "Interview completed successfully!"
-        });
+          );
+          setPopup({
+            open: true,
+            severity: "success",
+            message: "Interview completed successfully!"
+          });
+        } else {
+          throw new Error(response.data && response.data.message ? response.data.message : "Unknown error");
+        }
       } catch (submissionError) {
-        console.error('Error submitting interview:', submissionError.response || submissionError);
+        // Show backend error message if available
+        let msg = 'Error saving interview results. Your progress has been recorded locally.';
+        if (submissionError.response && submissionError.response.data && submissionError.response.data.message) {
+          msg = submissionError.response.data.message;
+        }
         setPopup({
           open: true,
           severity: 'error',
-          message: 'Error saving interview results. Your progress has been recorded locally.'
+          message: msg
         });
       }
     } catch (error) {
-      console.error('Error completing interview:', error);
       setPopup({
         open: true,
         severity: 'error',
