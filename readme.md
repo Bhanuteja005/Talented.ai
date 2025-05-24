@@ -8,7 +8,7 @@
   [![React](https://img.shields.io/badge/React-18.0.0-blue.svg)](https://reactjs.org/)
   [![Node.js](https://img.shields.io/badge/Node.js-14.0.0-green.svg)](https://nodejs.org/)
 
-  [Live Demo](https://talented-ai.vercel.app/) | [Documentation](docs/README.md) | [Report Bug](issues/new)
+  [Live Demo](https://talented-aii.vercel.app/) | [Documentation](docs/README.md) | [Report Bug](issues/new)
 </div>
 
 ## 🎥 Demo Video
