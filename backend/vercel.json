@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
+    }
+  ],
+  "env": {
+    "MONGODB_URI": "@mongodb_uri",
+    "GOOGLE_API_KEY": "@google_api_key",
+    "JWT_SECRET_KEY": "@jwt_secret_key",
+    "NODE_ENV": "production"
+  }
+}
