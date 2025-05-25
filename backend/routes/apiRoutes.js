@@ -1920,6 +1920,105 @@ router.get("/download/interview/:identifier", async (req, res) => {
   }
 });
 
+// Stream interview video (for inline video playback)
+router.get("/stream/interview/:identifier", async (req, res) => {
+  try {
+    const identifier = req.params.identifier;
+    console.log("Video stream request for:", identifier);
+
+    // Try GridFS first
+    if (gridFSReady) {
+      try {
+        let file = null;
+        let downloadStream = null;
+
+        // Try by filename first
+        const filesByName = await gfsBucket.find({ filename: identifier }).toArray();
+        if (filesByName && filesByName.length > 0) {
+          file = filesByName[0];
+          downloadStream = gfsBucket.openDownloadStream(file._id);
+        }
+        // Try by ObjectId if no filename match
+        else if (mongoose.Types.ObjectId.isValid(identifier)) {
+          const fileId = new mongoose.Types.ObjectId(identifier);
+          const filesById = await gfsBucket.find({ _id: fileId }).toArray();
+          if (filesById && filesById.length > 0) {
+            file = filesById[0];
+            downloadStream = gfsBucket.openDownloadStream(fileId);
+          }
+        }
+
+        if (file && downloadStream) {
+          console.log("Streaming video from GridFS:", file.filename);
+
+          res.set({
+            'Content-Type': file.contentType || 'video/webm',
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'no-cache'
+          });
+
+          downloadStream.pipe(res);
+
+          downloadStream.on('error', (error) => {
+            console.error("GridFS video stream error:", error);
+            if (!res.headersSent) {
+              res.status(500).json({
+                success: false,
+                message: "Video stream failed",
+                error: error.message
+              });
+            }
+          });
+          return;
+        }
+      } catch (gridError) {
+        console.warn("GridFS video stream failed:", gridError.message);
+      }
+    }
+
+    // Fallback to filesystem
+    const filePath = path.join(interviewUploadDir, identifier);
+
+    if (fs.existsSync(filePath)) {
+      console.log("Streaming video from filesystem:", filePath);
+      res.set({
+        'Content-Type': 'video/webm',
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'no-cache'
+      });
+
+      const readStream = fs.createReadStream(filePath);
+      readStream.pipe(res);
+
+      readStream.on('error', (error) => {
+        console.error("Filesystem video stream error:", error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: "Video stream failed",
+            error: error.message
+          });
+        }
+      });
+    } else {
+      console.log("Video file not found for streaming");
+      res.status(404).json({
+        success: false,
+        message: "Video file not found",
+        error: "FILE_NOT_FOUND"
+      });
+    }
+
+  } catch (error) {
+    console.error("Video stream error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Video stream failed",
+      error: error.message
+    });
+  }
+});
+
 // Add a dedicated endpoint to mark an interview as complete
 router.put("/applications/:id/interview-complete", jwtAuth, async (req, res) => {
   try {
@@ -1979,6 +2078,82 @@ router.get("/applications/:id/interview-results", jwtAuth, async (req, res) => {
     res.status(400).json({
       message: "Error fetching interview results",
       success: false
+    });
+  }
+});
+
+// Get interview results for a specific application
+router.get("/interview-results/:applicationId", jwtAuth, async (req, res) => {
+  try {
+    const applicationId = req.params.applicationId;
+    const InterviewResult = require("../db/InterviewResult");
+    
+    const result = await InterviewResult.findOne({ applicationId: applicationId })
+      .populate('applicationId')
+      .populate('jobId')
+      .populate('userId');
+    
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview results not found"
+      });
+    }
+    
+    res.json({
+      success: true,
+      result: result
+    });
+  } catch (error) {
+    console.error("Error fetching interview results:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching interview results",
+      error: error.message
+    });
+  }
+});
+
+// Get all interview results for a recruiter's jobs
+router.get("/interview-results", jwtAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    const InterviewResult = require("../db/InterviewResult");
+    
+    let findParams = {};
+    
+    if (user.type === "recruiter") {
+      // Find all jobs posted by this recruiter
+      const recruiterJobs = await Job.find({ userId: user._id }).select('_id');
+      const jobIds = recruiterJobs.map(job => job._id);
+      findParams.jobId = { $in: jobIds };
+    } else if (user.type === "applicant") {
+      // Find interview results for this applicant
+      findParams.userId = user._id;
+    }
+    
+    const results = await InterviewResult.find(findParams)
+      .populate({
+        path: 'applicationId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
+      .populate('jobId')
+      .populate('userId')
+      .sort({ completedAt: -1 });
+    
+    res.json({
+      success: true,
+      results: results
+    });
+  } catch (error) {
+    console.error("Error fetching interview results:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching interview results",
+      error: error.message
     });
   }
 });

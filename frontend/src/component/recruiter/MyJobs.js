@@ -5,19 +5,16 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  InputAdornment,
   makeStyles,
   MenuItem,
   Modal,
   Paper,
   Slider,
   TextField,
-  Typography,
+  Typography
 } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
-import FilterListIcon from "@material-ui/icons/FilterList";
-import SearchIcon from "@material-ui/icons/Search";
 import Rating from "@material-ui/lab/Rating";
 import axios from "axios";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -696,7 +693,7 @@ const FilterPopup = (props) => {
   );
 };
 
-const MyJobs = (props) => {
+const MyJobs = () => {
   const [jobs, setJobs] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOptions, setSearchOptions] = useState({
@@ -723,6 +720,7 @@ const MyJobs = (props) => {
       },
     },
   });
+  const [interviewResults, setInterviewResults] = useState({});
 
   const setPopup = useContext(SetPopupContext);
 
@@ -800,86 +798,139 @@ const MyJobs = (props) => {
 
   useEffect(() => {
     getData();
-  }, [getData]);
+    fetchInterviewResults();
+  }, []);
+
+  const fetchInterviewResults = async () => {
+    try {
+      const response = await axios.get(apiList.interviewResults, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      
+      if (response.data.success) {
+        // Create a map of applicationId to interview results
+        const resultsMap = {};
+        response.data.results.forEach(result => {
+          resultsMap[result.applicationId._id] = result;
+        });
+        setInterviewResults(resultsMap);
+      }
+    } catch (error) {
+      console.error("Error fetching interview results:", error);
+    }
+  };
+
+  const getInterviewScore = (applicationId) => {
+    const result = interviewResults[applicationId];
+    return result ? result.overallScore : null;
+  };
+
+  const getInterviewStatus = (applicationId) => {
+    const result = interviewResults[applicationId];
+    if (!result) return "Not Taken";
+    return "Completed";
+  };
+
+  const viewInterviewDetails = (applicationId) => {
+    const result = interviewResults[applicationId];
+    if (!result) return;
+
+    setPopup({
+      open: true,
+      severity: "info",
+      message: (
+        <div>
+          <h3>Interview Results</h3>
+          <p><strong>Overall Score:</strong> {result.overallScore}/10</p>
+          <p><strong>Questions Asked:</strong> {result.questions.length}</p>
+          <p><strong>Completed At:</strong> {new Date(result.completedAt).toLocaleString()}</p>
+          {result.questions.map((question, index) => (
+            <div key={index} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc' }}>
+              <p><strong>Q{index + 1}:</strong> {question}</p>
+              <p><strong>Answer:</strong> {result.answers[index] || 'No answer provided'}</p>
+              <p><strong>Score:</strong> {result.scores[index] || 0}/10</p>
+            </div>
+          ))}
+          {/* Show video if available */}
+          {(result.videoFileId || result.videoRecording) && (
+            <div style={{ marginTop: '15px', padding: '10px', border: '1px solid #2196F3', borderRadius: '6px', background: '#f0f7ff' }}>
+              <p><strong>Interview Video:</strong></p>
+              {/* Video preview (stream) */}
+              <video
+                width="320"
+                height="240"
+                controls
+                style={{ marginBottom: '10px', background: '#000' }}
+              >
+                <source
+                  src={
+                    result.videoFileId
+                      ? `${apiList.streamInterview}/${result.videoFileId}`
+                      : `${apiList.streamInterview}/${result.videoRecording}`
+                  }
+                  type="video/webm"
+                />
+                Your browser does not support the video tag.
+              </video>
+              <br />
+              {/* Download link */}
+              <a
+                href={
+                  result.videoFileId
+                    ? `${apiList.downloadInterview}/${result.videoFileId}`
+                    : `${apiList.downloadInterview}/${result.videoRecording}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#fff",
+                  background: "#2196F3",
+                  padding: "8px 16px",
+                  borderRadius: "4px",
+                  textDecoration: "none",
+                  fontWeight: "bold"
+                }}
+              >
+                Download Video
+              </a>
+              <div style={{ fontSize: "12px", color: "#666", marginTop: "5px" }}>
+                File: {result.videoRecording}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    });
+  };
 
   return (
-    <>
-      <Grid
-        container
-        item
-        direction="column"
-        alignItems="center"
-        style={{ padding: "30px", minHeight: "93vh" }}
-      >
-        <Grid
-          item
-          container
-          direction="column"
-          justify="center"
-          alignItems="center"
-        >
-          <Grid item xs>
-            <Typography variant="h2">My Jobs</Typography>
-          </Grid>
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
-  <TextField
-    label="Search Jobs"
-    value={searchOptions.query}
-    onChange={(event) =>
-      setSearchOptions({
-        ...searchOptions,
-        query: event.target.value,
-      })
-    }
-    onKeyPress={(ev) => {
-      if (ev.key === "Enter") {
-        getData();
-      }
-    }}
-    InputProps={{
-      endAdornment: (
-        <InputAdornment>
-          <IconButton 
-            onClick={() => getData()}
-            size="small"
-          >
-            <SearchIcon />
-          </IconButton>
-        </InputAdornment>
-      ),
-    }}
-    sx={{
-      width: {
-        xs: '95%',    // Mobile
-        sm: '800px',  // Tablet
-        md: '900px',  // Small Desktop
-        lg: '1000px', // Large Desktop
-      },
-      maxWidth: '1200px',
-      my: { xs: 1, sm: 2 }
-    }}
-    variant="outlined"
-    size="small"
-  />
-</Grid>
-          <Grid item>
-            <IconButton onClick={() => setFilterOpen(true)}>
-              <FilterListIcon />
-            </IconButton>
-          </Grid>
+    <Grid
+      container
+      item
+      direction="column"
+      alignItems="center"
+      style={{ padding: "30px", minHeight: "93vh" }}
+    >
+      {/* ...existing code... */}
+      
+      <Grid container item xs direction="column">
+        <Grid item>
+          <h2>Jobs</h2>
         </Grid>
-
         <Grid
           container
           item
           xs
           direction="column"
+          style={{ width: "100%" }}
           alignItems="stretch"
-          justify="center"
+          justifyContent="center"
         >
           {jobs.length > 0 ? (
             jobs.map((job) => {
-              return <JobTile job={job} getData={getData} />;
+              return <JobTile job={job} getData={getData} key={job._id} />;
             })
           ) : (
             <Typography variant="h5" style={{ textAlign: "center" }}>
@@ -888,17 +939,7 @@ const MyJobs = (props) => {
           )}
         </Grid>
       </Grid>
-      <FilterPopup
-        open={filterOpen}
-        searchOptions={searchOptions}
-        setSearchOptions={setSearchOptions}
-        handleClose={() => setFilterOpen(false)}
-        getData={() => {
-          getData();
-          setFilterOpen(false);
-        }}
-      />
-    </>
+    </Grid>
   );
 };
 

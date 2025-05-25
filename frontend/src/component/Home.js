@@ -31,6 +31,10 @@ const useStyles = makeStyles((theme) => ({
   body: {
     height: "inherit",
   },
+  button: {
+    width: "100%",
+    height: "100%",
+  },
   jobTileOuter: {
     padding: "30px",
     margin: "20px 0",
@@ -44,8 +48,7 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   button: {
-    width: "100%",
-    height: "100%",
+    
     marginTop:'90px',
     padding: '5px 15px',
     fontSize: '0.875rem',

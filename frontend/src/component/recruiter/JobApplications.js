@@ -1,16 +1,16 @@
 import {
-    Avatar,
-    Button,
-    Checkbox,
-    Chip,
-    CircularProgress,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    makeStyles,
-    Modal,
-    Paper,
-    Typography,
+  Avatar,
+  Button,
+  Checkbox,
+  Chip,
+  CircularProgress,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  makeStyles,
+  Modal,
+  Paper,
+  Typography,
 } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
@@ -746,18 +746,52 @@ const ApplicationTile = (props) => {
                 </Paper>
               ))}
               
-              {interviewResult.videoRecording && (
+              {interviewResult.videoFileId || interviewResult.videoRecording ? (
                 <div style={{ margin: '20px 0' }}>
                   <Typography variant="subtitle1" style={{ marginBottom: '10px', fontWeight: 'bold' }}>
                     Interview Recording:
                   </Typography>
-                  <video 
-                    controls 
+                  {/* Video preview (stream from backend) */}
+                  <video
+                    controls
                     style={{ width: '100%', maxHeight: '320px', backgroundColor: '#000' }}
-                    src={`${server}${interviewResult.videoRecording}`}
-                  />
+                  >
+                    <source
+                      src={
+                        interviewResult.videoFileId
+                          ? `${server}/api/stream/interview/${interviewResult.videoFileId}`
+                          : `${server}/api/stream/interview/${interviewResult.videoRecording}`
+                      }
+                      type="video/webm"
+                    />
+                    Your browser does not support the video tag.
+                  </video>
+                  <div style={{ marginTop: '10px' }}>
+                    <a
+                      href={
+                        interviewResult.videoFileId
+                          ? `${server}/api/download/interview/${interviewResult.videoFileId}`
+                          : `${server}/api/download/interview/${interviewResult.videoRecording}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "#fff",
+                        background: "#2196F3",
+                        padding: "8px 16px",
+                        borderRadius: "4px",
+                        textDecoration: "none",
+                        fontWeight: "bold"
+                      }}
+                    >
+                      Download Video
+                    </a>
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#666", marginTop: "5px" }}>
+                    File: {interviewResult.videoRecording}
+                  </div>
                 </div>
-              )}
+              ) : null}
               
               <Typography variant="body2" style={{ marginTop: '15px', color: '#666' }}>
                 Interview completed on: {new Date(interviewResult.completedAt).toLocaleString()}

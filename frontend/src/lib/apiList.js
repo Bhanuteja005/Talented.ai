@@ -3,7 +3,7 @@ export const server = "http://localhost:4444";
 const apiList = {
   login: `${server}/auth/login`,
   signup: `${server}/auth/signup`,
-  uploadResume: `${server}/api/uploads/resume`, // Fixed: Added /api prefix
+  uploadResume: `${server}/api/uploads/resume`,
   uploadProfileImage: `${server}/upload/profile`,
   jobs: `${server}/api/jobs`,
   applications: `${server}/api/applications`,
@@ -15,6 +15,7 @@ const apiList = {
   evaluateAnswer: `${server}/api/evaluate-answer`,
   downloadResume: `${server}/api/download/resume`,
   downloadInterview: `${server}/api/download/interview`,
+  streamInterview: `${server}/api/stream/interview`,
 };
 
 export default apiList;
