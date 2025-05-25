@@ -35,11 +35,14 @@ mongoose.connection.once('open', () => {
 const resumeUploadDir = path.join(__dirname, "../uploads/resume");
 const interviewUploadDir = path.join(__dirname, "../uploads/interviews");
 
-if (!fs.existsSync(resumeUploadDir)) {
-  fs.mkdirSync(resumeUploadDir, { recursive: true });
-}
-if (!fs.existsSync(interviewUploadDir)) {
-  fs.mkdirSync(interviewUploadDir, { recursive: true });
+// Only try to create directories if running locally (not on Vercel serverless)
+if (process.env.VERCEL !== "1") {
+  if (!fs.existsSync(resumeUploadDir)) {
+    fs.mkdirSync(resumeUploadDir, { recursive: true });
+  }
+  if (!fs.existsSync(interviewUploadDir)) {
+    fs.mkdirSync(interviewUploadDir, { recursive: true });
+  }
 }
 
 // Helper function to upload file to GridFS with fallback
