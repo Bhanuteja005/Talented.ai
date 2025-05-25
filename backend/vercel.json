@@ -1,11 +1,11 @@
 {
     "version": 2,
-    "builds": [
-      {
-        "src": "api/index.js",
-        "use": "@vercel/node"
+    "functions": {
+      "api/index.js": {
+        "runtime": "nodejs18.x",
+        "maxDuration": 30
       }
-    ],
+    },
     "routes": [
       {
         "src": "/(.*)",
@@ -16,10 +16,5 @@
       "MONGODB_URI": "@mongodb_uri",
       "GOOGLE_API_KEY": "@google_api_key",
       "JWT_SECRET_KEY": "@jwt_secret_key"
-    },
-    "functions": {
-      "api/index.js": {
-        "maxDuration": 30
-      }
     }
   }
