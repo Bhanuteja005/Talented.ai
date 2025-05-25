@@ -151,9 +151,9 @@ const Navbar = (props) => {
           <StyledButton key="profile" variants={buttonVariants} onClick={() => handleClick("/profile")}>
             Profile
           </StyledButton>,
-          <StyledButton key="ai-interview" variants={buttonVariants} onClick={() => handleClick("/ai-interview")}>
+          /*<StyledButton key="ai-interview" variants={buttonVariants} onClick={() => handleClick("/ai-interview")}>
             Skill Assessment
-          </StyledButton>,
+          </StyledButton>,*/
           
           <StyledButton key="candidate" variants={buttonVariants} onClick={() => handleClick("/candidate")}>
             Learning Agent
