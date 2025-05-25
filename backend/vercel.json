@@ -2,14 +2,24 @@
     "version": 2,
     "builds": [
       {
-        "src": "server.js",
+        "src": "api/index.js",
         "use": "@vercel/node"
       }
     ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "/server.js"
+        "dest": "api/index.js"
       }
-    ]
+    ],
+    "env": {
+      "MONGODB_URI": "@mongodb_uri",
+      "GOOGLE_API_KEY": "@google_api_key",
+      "JWT_SECRET_KEY": "@jwt_secret_key"
+    },
+    "functions": {
+      "api/index.js": {
+        "maxDuration": 30
+      }
+    }
   }
