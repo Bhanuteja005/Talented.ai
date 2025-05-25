@@ -514,8 +514,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// REMOVE or COMMENT OUT this line for Vercel:
-// app.listen(PORT, () => { ... });
-
-// Instead, export the app for Vercel:
-module.exports = app;
+app.listen(port, () => {
+  console.log(`Server started on port ${port}!`);
+});
