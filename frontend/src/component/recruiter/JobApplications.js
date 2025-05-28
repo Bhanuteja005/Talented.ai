@@ -524,18 +524,15 @@ const ApplicationTile = (props) => {
       ].join('\n');
       // Optionally add more fields if needed
 
+      // Use the correct API endpoint (external, not local)
       const res = await axios.post(
-        "/api/suggest-candidate",
+        "https://talented-ai-api.vercel.app/api/suggest-candidate",
         {
           companyDescription: "", // Not available here
           candidateInfo,
           jobDescription
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
+        // No Authorization header needed for public endpoint
       );
       setSuggestionText(res.data.evaluation || "No suggestion available.");
     } catch (e) {
@@ -545,108 +542,7 @@ const ApplicationTile = (props) => {
     }
   };
 
-  const buttonSet = {
-    applied: (
-      <>
-        <Grid item xs>
-          <Button
-            className={`${classes.statusBlock} shortlisted`}
-            onClick={() => updateStatus("shortlisted")}
-          >
-            Shortlist
-          </Button>
-        </Grid>
-        <Grid item xs>
-          <Button
-            className={`${classes.statusBlock} rejected`}
-            onClick={() => updateStatus("rejected")}
-          >
-            Reject
-          </Button>
-        </Grid>
-      </>
-    ),
-    shortlisted: (
-      <>
-        <Grid container spacing={1}>
-          <Grid item xs={12}>
-            <Button
-              className={`${classes.statusBlock} accepted`}
-              onClick={() => updateStatus("accepted")}
-            >
-              Accept
-            </Button>
-          </Grid>
-          {application.interviewCompleted ? (
-            <Grid item xs={12}>
-              <Button
-                className={`${classes.statusBlock}`}
-                style={{ backgroundColor: '#6366f1', color: 'white' }}
-                onClick={() => fetchInterviewResults(application._id)}
-              >
-                View Interview Results ({application.interviewScore || 0}/100)
-              </Button>
-            </Grid>
-          ) : (
-            <Grid item xs={12}>
-              <Button
-                className={`${classes.statusBlock}`}
-                style={{ backgroundColor: '#9CA3AF', color: 'white' }}
-                disabled
-              >
-                Awaiting Interview
-              </Button>
-            </Grid>
-          )}
-          <Grid item xs={12}>
-            <Button
-              className={`${classes.statusBlock} rejected`}
-              onClick={() => updateStatus("rejected")}
-            >
-              Reject
-            </Button>
-          </Grid>
-        </Grid>
-      </>
-    ),
-    rejected: (
-      <>
-        <Grid item xs>
-          <Paper className={`${classes.statusBlock} rejected`}>
-            Rejected
-          </Paper>
-        </Grid>
-      </>
-    ),
-    accepted: (
-      <>
-        <Grid item xs>
-          <Paper className={`${classes.statusBlock} accepted`}>
-            Accepted
-          </Paper>
-        </Grid>
-      </>
-    ),
-    cancelled: (
-      <>
-        <Grid item xs>
-          <Paper className={`${classes.statusBlock} cancelled`}>
-            Cancelled
-          </Paper>
-        </Grid>
-      </>
-    ),
-    finished: (
-      <>
-        <Grid item xs>
-          <Paper className={`${classes.statusBlock} finished`}>
-            Finished
-          </Paper>
-        </Grid>
-      </>
-    ),
-  };
-
+  // Arrange action buttons in a visually clear, grouped layout
   return (
     <Paper className={classes.jobTileOuter} elevation={3}>
       <Grid container>
@@ -700,29 +596,143 @@ const ApplicationTile = (props) => {
             ))}
           </Grid>
         </Grid>
-        <Grid item container direction="column" xs={3}>
-          <Grid item>
-            <Button
-              variant="contained"
-              className={classes.statusBlock}
-              color="primary"
-              onClick={() => getResume()}
-            >
-              Download Resume
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              className={classes.statusBlock}
-              style={{ background: "#2196F3", color: "#fff", marginTop: 8 }}
-              onClick={handleOpenSuggestion}
-            >
-              Open Suggestion
-            </Button>
-          </Grid>
-          <Grid item container xs>
-            {buttonSet[application.status]}
+        <Grid item xs={3}>
+          <Grid
+            container
+            direction="column"
+            spacing={2}
+            alignItems="stretch"
+            justifyContent="flex-start"
+          >
+            <Grid item>
+              <Button
+                variant="contained"
+                className={classes.statusBlock}
+                color="primary"
+                onClick={() => getResume()}
+                style={{ marginBottom: 8 }}
+              >
+                Download Resume
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button
+                variant="contained"
+                className={classes.statusBlock}
+                style={{
+                  background: "#2196F3",
+                  color: "#fff",
+                  marginBottom: 8,
+                }}
+                onClick={handleOpenSuggestion}
+              >
+                Open Suggestion
+              </Button>
+            </Grid>
+            <Grid item>
+              {/* Group status action buttons in a row for clarity */}
+              <Grid container spacing={1} justifyContent="center">
+                {application.status === "applied" && (
+                  <>
+                    <Grid item xs={6}>
+                      <Button
+                        className={`${classes.statusBlock} shortlisted`}
+                        onClick={() => updateStatus("shortlisted")}
+                        style={{ width: "100%" }}
+                      >
+                        Shortlist
+                      </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Button
+                        className={`${classes.statusBlock} rejected`}
+                        onClick={() => updateStatus("rejected")}
+                        style={{ width: "100%" }}
+                      >
+                        Reject
+                      </Button>
+                    </Grid>
+                  </>
+                )}
+                {application.status === "shortlisted" && (
+                  <Grid container spacing={1}>
+                    <Grid item xs={12}>
+                      <Button
+                        className={`${classes.statusBlock} accepted`}
+                        onClick={() => updateStatus("accepted")}
+                        style={{ width: "100%" }}
+                      >
+                        Accept
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12}>
+                      {application.interviewCompleted ? (
+                        <Button
+                          className={classes.statusBlock}
+                          style={{
+                            backgroundColor: "#6366f1",
+                            color: "white",
+                            width: "100%",
+                          }}
+                          onClick={() => fetchInterviewResults(application._id)}
+                        >
+                          View Interview Results ({application.interviewScore || 0}/100)
+                        </Button>
+                      ) : (
+                        <Button
+                          className={classes.statusBlock}
+                          style={{
+                            backgroundColor: "#9CA3AF",
+                            color: "white",
+                            width: "100%",
+                          }}
+                          disabled
+                        >
+                          Awaiting Interview
+                        </Button>
+                      )}
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        className={`${classes.statusBlock} rejected`}
+                        onClick={() => updateStatus("rejected")}
+                        style={{ width: "100%" }}
+                      >
+                        Reject
+                      </Button>
+                    </Grid>
+                  </Grid>
+                )}
+                {application.status === "rejected" && (
+                  <Grid item xs={12}>
+                    <Paper className={`${classes.statusBlock} rejected`}>
+                      Rejected
+                    </Paper>
+                  </Grid>
+                )}
+                {application.status === "accepted" && (
+                  <Grid item xs={12}>
+                    <Paper className={`${classes.statusBlock} accepted`}>
+                      Accepted
+                    </Paper>
+                  </Grid>
+                )}
+                {application.status === "cancelled" && (
+                  <Grid item xs={12}>
+                    <Paper className={`${classes.statusBlock} cancelled`}>
+                      Cancelled
+                    </Paper>
+                  </Grid>
+                )}
+                {application.status === "finished" && (
+                  <Grid item xs={12}>
+                    <Paper className={`${classes.statusBlock} finished`}>
+                      Finished
+                    </Paper>
+                  </Grid>
+                )}
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>

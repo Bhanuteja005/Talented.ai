@@ -178,19 +178,7 @@ const JobTile = (props) => {
               <Chip label={skill} style={{ marginRight: "2px" }} />
             ))}
           </Grid>
-          {/* --- Recruiter Agent Suggestion --- */}
-          <Grid item>
-            <Typography variant="subtitle2" style={{ marginTop: 8, color: "#2196F3" }}>
-              Recruiter Agent Suggestion:
-            </Typography>
-            <div style={{ fontSize: "0.95em", color: "#333", background: "#f5f7fa", borderRadius: 4, padding: "6px 10px", marginTop: 2 }}>
-              {recruiterSuggestion === undefined
-                ? <span style={{ color: "#aaa" }}>Loading suggestion...</span>
-                : recruiterSuggestion === null
-                  ? <span style={{ color: "#f44336" }}>No suggestion available</span>
-                  : <span dangerouslySetInnerHTML={{ __html: recruiterSuggestion.replace(/\n/g, "<br/>") }} />}
-            </div>
-          </Grid>
+          
         </Grid>
         <Grid item container direction="column" xs={3}>
           <Grid item xs>
