@@ -66,7 +66,7 @@ const useStyles = makeStyles((theme) => ({
 const JobTile = (props) => {
   const classes = useStyles();
   const navigate = useNavigate();
-  const { job, getData } = props;
+  const { job, getData, recruiterSuggestion } = props;
   const setPopup = useContext(SetPopupContext);
 
   const [open, setOpen] = useState(false);
@@ -177,6 +177,19 @@ const JobTile = (props) => {
             {job.skillsets.map((skill) => (
               <Chip label={skill} style={{ marginRight: "2px" }} />
             ))}
+          </Grid>
+          {/* --- Recruiter Agent Suggestion --- */}
+          <Grid item>
+            <Typography variant="subtitle2" style={{ marginTop: 8, color: "#2196F3" }}>
+              Recruiter Agent Suggestion:
+            </Typography>
+            <div style={{ fontSize: "0.95em", color: "#333", background: "#f5f7fa", borderRadius: 4, padding: "6px 10px", marginTop: 2 }}>
+              {recruiterSuggestion === undefined
+                ? <span style={{ color: "#aaa" }}>Loading suggestion...</span>
+                : recruiterSuggestion === null
+                  ? <span style={{ color: "#f44336" }}>No suggestion available</span>
+                  : <span dangerouslySetInnerHTML={{ __html: recruiterSuggestion.replace(/\n/g, "<br/>") }} />}
+            </div>
           </Grid>
         </Grid>
         <Grid item container direction="column" xs={3}>
@@ -721,6 +734,7 @@ const MyJobs = () => {
     },
   });
   const [interviewResults, setInterviewResults] = useState({});
+  const [recruiterSuggestions, setRecruiterSuggestions] = useState({});
 
   const setPopup = useContext(SetPopupContext);
 
@@ -800,6 +814,42 @@ const MyJobs = () => {
     getData();
     fetchInterviewResults();
   }, []);
+
+  // Fetch recruiter agent suggestion for each job
+  useEffect(() => {
+    if (jobs.length === 0) return;
+    const fetchSuggestions = async () => {
+      const newSuggestions = {};
+      await Promise.all(jobs.map(async (job) => {
+        // Only fetch if not already fetched
+        if (recruiterSuggestions[job._id] !== undefined) {
+          newSuggestions[job._id] = recruiterSuggestions[job._id];
+          return;
+        }
+        try {
+          const res = await axios.post(
+            "/api/suggest-candidate",
+            {
+              companyDescription: "", // Not available, leave blank
+              candidateInfo: "", // Not available, leave blank
+              jobDescription: `Title: ${job.title}\nSkills: ${job.skillsets.join(", ")}`
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          newSuggestions[job._id] = res.data.evaluation || null;
+        } catch (e) {
+          newSuggestions[job._id] = null;
+        }
+      }));
+      setRecruiterSuggestions((prev) => ({ ...prev, ...newSuggestions }));
+    };
+    fetchSuggestions();
+    // eslint-disable-next-line
+  }, [jobs]);
 
   const fetchInterviewResults = async () => {
     try {
@@ -930,7 +980,14 @@ const MyJobs = () => {
         >
           {jobs.length > 0 ? (
             jobs.map((job) => {
-              return <JobTile job={job} getData={getData} key={job._id} />;
+              return (
+                <JobTile
+                  job={job}
+                  getData={getData}
+                  key={job._id}
+                  recruiterSuggestion={recruiterSuggestions[job._id]}
+                />
+              );
             })
           ) : (
             <Typography variant="h5" style={{ textAlign: "center" }}>

@@ -184,7 +184,19 @@ app.post("/api/suggest-learning-path", async (req, res) => {
 });
 // Recruiter Agent API Endpoint
 app.post("/api/suggest-candidate", async (req, res) => {
-  const { companyDescription, candidateInfo, jobDescription } = req.body;
+  let { companyDescription, candidateInfo, jobDescription } = req.body;
+
+  // Ensure all fields are strings and not undefined/null
+  companyDescription = companyDescription || "";
+  candidateInfo = candidateInfo || "";
+  jobDescription = jobDescription || "";
+
+  // Log for debugging
+  console.log("Recruiter Agent Suggestion Request:", {
+    companyDescription: companyDescription.slice(0, 100),
+    candidateInfo: candidateInfo.slice(0, 100),
+    jobDescription: jobDescription.slice(0, 100)
+  });
 
   const prompt = {
     contents: [
@@ -206,15 +218,26 @@ app.post("/api/suggest-candidate", async (req, res) => {
       { headers: { 'Content-Type': 'application/json' } }
     );
 
-    if (response.data && response.data.candidates && response.data.candidates[0].content && response.data.candidates[0].content.parts) {
-      const evaluation = response.data.candidates[0].content.parts.map(part => part.text).join("\n");
+    // Try to extract the evaluation text robustly
+    let evaluation = "";
+    if (
+      response.data &&
+      response.data.candidates &&
+      response.data.candidates[0].content &&
+      response.data.candidates[0].content.parts
+    ) {
+      // Join all parts as text
+      evaluation = response.data.candidates[0].content.parts.map(part => part.text).join("\n");
+      // Remove markdown/code blocks if present
+      evaluation = evaluation.replace(/```(?:\w+)?\n?/g, '').replace(/```\n?/g, '').trim();
+      if (!evaluation) evaluation = "No suggestion generated.";
       res.json({ evaluation });
     } else {
-      console.log("No valid response structure found.");
+      console.log("No valid response structure found.", response.data);
       res.status(500).json({ error: "No valid response from AI." });
     }
   } catch (error) {
-    console.error("Error generating content:", error);
+    console.error("Error generating content:", error?.response?.data || error.message);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });

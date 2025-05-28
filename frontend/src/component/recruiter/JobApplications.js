@@ -399,6 +399,11 @@ const ApplicationTile = (props) => {
   const [loadingResults, setLoadingResults] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
+  // --- Suggestion Modal State ---
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [suggestionText, setSuggestionText] = useState("");
+
   const appliedOn = new Date(application.dateOfApplication);
 
   const handleClose = () => {
@@ -499,6 +504,44 @@ const ApplicationTile = (props) => {
       });
     } finally {
       setLoadingResults(false);
+    }
+  };
+
+  // --- Suggestion Handler ---
+  const handleOpenSuggestion = async () => {
+    setSuggestionOpen(true);
+    setSuggestionLoading(true);
+    setSuggestionText("");
+    try {
+      // Compose job and candidate info
+      const jobDescription = `Title: ${application.job.title}\nSkills: ${application.job.skillsets?.join(", ")}`;
+      // Include SOP and all relevant candidate info
+      const candidateInfo = [
+        `Name: ${application.jobApplicant.name}`,
+        `Skills: ${application.jobApplicant.skills?.join(", ")}`,
+        `Education: ${application.jobApplicant.education?.map(e => `${e.institutionName} (${e.startYear}-${e.endYear || "Ongoing"})`).join(", ")}`,
+        `SOP: ${application.sop || "Not Provided"}`
+      ].join('\n');
+      // Optionally add more fields if needed
+
+      const res = await axios.post(
+        "/api/suggest-candidate",
+        {
+          companyDescription: "", // Not available here
+          candidateInfo,
+          jobDescription
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setSuggestionText(res.data.evaluation || "No suggestion available.");
+    } catch (e) {
+      setSuggestionText("Failed to fetch suggestion.");
+    } finally {
+      setSuggestionLoading(false);
     }
   };
 
@@ -668,6 +711,16 @@ const ApplicationTile = (props) => {
               Download Resume
             </Button>
           </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.statusBlock}
+              style={{ background: "#2196F3", color: "#fff", marginTop: 8 }}
+              onClick={handleOpenSuggestion}
+            >
+              Open Suggestion
+            </Button>
+          </Grid>
           <Grid item container xs>
             {buttonSet[application.status]}
           </Grid>
@@ -809,6 +862,44 @@ const ApplicationTile = (props) => {
           ) : (
             <Typography variant="body1">No interview results found.</Typography>
           )}
+        </Paper>
+      </Modal>
+      {/* Suggestion Modal */}
+      <Modal open={suggestionOpen} onClose={() => setSuggestionOpen(false)} className={classes.popupDialog}>
+        <Paper
+          style={{
+            padding: "24px",
+            outline: "none",
+            display: "flex",
+            flexDirection: "column",
+            minWidth: "40%",
+            maxWidth: "600px",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            alignItems: "center"
+          }}
+        >
+          <Typography variant="h5" gutterBottom>
+            Recruiter Agent Suggestion
+          </Typography>
+          {suggestionLoading ? (
+            <div style={{ padding: "30px" }}>
+              <CircularProgress />
+              <Typography style={{ marginTop: 16 }}>Loading suggestion...</Typography>
+            </div>
+          ) : (
+            <Typography variant="body1" style={{ whiteSpace: "pre-line" }}>
+              {suggestionText}
+            </Typography>
+          )}
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ marginTop: 24 }}
+            onClick={() => setSuggestionOpen(false)}
+          >
+            Close
+          </Button>
         </Paper>
       </Modal>
     </Paper>
