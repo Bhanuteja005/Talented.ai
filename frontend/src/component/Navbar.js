@@ -130,9 +130,9 @@ const Navbar = (props) => {
           <StyledButton key="employees" variants={buttonVariants} onClick={() => handleClick("/employees")}>
             Employees
           </StyledButton>,
-          <StyledButton key="recruiter" variants={buttonVariants} onClick={() => handleClick("/recruiter")}>
+          /*<StyledButton key="recruiter" variants={buttonVariants} onClick={() => handleClick("/recruiter")}>
             Agent
-          </StyledButton>,
+          </StyledButton>,*/
           <StyledButton key="profile" variants={buttonVariants} onClick={() => handleClick("/profile")}>
             Profile
           </StyledButton>,
