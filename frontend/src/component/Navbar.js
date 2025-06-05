@@ -187,7 +187,7 @@ const Navbar = (props) => {
           { key: "addjob", icon: <AddIcon />, onClick: () => handleClick("/addjob") },
           { key: "myjobs", icon: <WorkIcon />, onClick: () => handleClick("/myjobs") },
           { key: "employees", icon: <PeopleIcon />, onClick: () => handleClick("/employees") },
-          { key: "recruiter", icon: <PersonIcon />, onClick: () => handleClick("/recruiter") },
+          /*{ key: "recruiter", icon: <PersonIcon />, onClick: () => handleClick("/recruiter") },*/
           { key: "profile", icon: <PersonIcon />, onClick: () => handleClick("/profile") },
           { key: "logout", icon: <ExitToAppIcon />, onClick: () => handleClick("/logout") }
         );
@@ -196,7 +196,7 @@ const Navbar = (props) => {
           { key: "home", icon: <HomeIcon />, onClick: () => handleClick("/home") },
           { key: "applications", icon: <WorkIcon />, onClick: () => handleClick("/applications") },
           { key: "profile", icon: <PersonIcon />, onClick: () => handleClick("/profile") },
-          { key: "skill-assesment", icon: <PersonIcon />, onClick: () => handleClick("/ai-interview") },
+          /*{ key: "skill-assesment", icon: <PersonIcon />, onClick: () => handleClick("/ai-interview") },*/
           { key: "candidate", icon: <PersonIcon />, onClick: () => handleClick("/candidate") },
           { key: "logout", icon: <ExitToAppIcon />, onClick: () => handleClick("/logout") }
         );

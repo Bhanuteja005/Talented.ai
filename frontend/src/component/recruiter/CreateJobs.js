@@ -263,7 +263,7 @@ const CreateJobs = (props) => {
                         color="primary"
                       />
                     }
-                    label="Require Audio Interview"
+                    label="Require AI Interview"
                   />
                 </Grid>
                 
