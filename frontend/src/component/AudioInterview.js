@@ -143,16 +143,10 @@ const AudioInterview = () => {
   const webcamCanvasRef = useRef(null);
   const webcamInstanceRef = useRef(null);
   const [mediaRecorderReady, setMediaRecorderReady] = useState(false);
-
+  
   const classes = useStyles({ isRecording });
 
-  // --- Improved Speech Recognition State ---
-  const [recognitionInstance, setRecognitionInstance] = useState(null);
-  const [isSpeechActive, setIsSpeechActive] = useState(false);
-  const [finalTranscript, setFinalTranscript] = useState('');
-  const [interimTranscript, setInterimTranscript] = useState('');
-
-  // --- Improved Speech Recognition Setup ---
+  // Initialize speech recognition with better error handling
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setError('Speech recognition is not supported in your browser. Try Chrome or Edge.');
@@ -160,39 +154,60 @@ const AudioInterview = () => {
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recog = new SpeechRecognition();
-    recog.continuous = true;
-    recog.interimResults = true;
-    recog.lang = 'en-US';
-    recog.maxAlternatives = 1;
+    const recognitionInstance = new SpeechRecognition();
+    recognitionInstance.continuous = true; // Changed to true for better recording
+    recognitionInstance.interimResults = true; // Changed to true to see real-time results
+    recognitionInstance.lang = 'en-US';
+    recognitionInstance.maxAlternatives = 1;
 
-    recog.onresult = (event) => {
-      let final = '';
-      let interim = '';
+    let finalTranscript = '';
+    let interimTranscript = '';
+
+    recognitionInstance.onresult = (event) => {
+      finalTranscript = '';
+      interimTranscript = '';
+
+      // Process all results from the current session
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          final += transcript + ' ';
+          finalTranscript += transcript + ' ';
         } else {
-          interim += transcript;
+          interimTranscript += transcript;
         }
       }
-      setFinalTranscript(prev => (prev + ' ' + final).trim());
-      setInterimTranscript(interim);
+
+      // Update the display with final + interim results
+      const fullTranscript = finalTranscript + interimTranscript;
+      setTranscript(formatTranscript(fullTranscript.trim()));
     };
 
-    recog.onstart = () => {
-      setIsSpeechActive(true);
-      setFinalTranscript('');
-      setInterimTranscript('');
+    recognitionInstance.onstart = () => {
+      console.log('Speech recognition started');
+      finalTranscript = '';
+      interimTranscript = '';
+      setTranscript(''); // Clear previous transcript
     };
 
-    recog.onend = () => {
-      setIsSpeechActive(false);
-      // Do not auto-restart, let user control start/stop
+    recognitionInstance.onend = () => {
+      console.log('Speech recognition ended');
+      if (isRecording) {
+        // If we're still supposed to be recording, restart recognition
+        setTimeout(() => {
+          if (isRecording && recognitionInstance) {
+            try {
+              recognitionInstance.start();
+            } catch (e) {
+              console.log('Recognition restart failed:', e);
+            }
+          }
+        }, 100);
+      }
     };
 
-    recog.onerror = (event) => {
+    recognitionInstance.onerror = (event) => {
+      console.error('Speech recognition error', event.error);
+      
       let errorMessage = 'Speech recognition error';
       if (event.error === 'no-speech') {
         errorMessage = 'No speech was detected. Please try again.';
@@ -200,7 +215,11 @@ const AudioInterview = () => {
         errorMessage = 'Audio capture failed. Please check your microphone.';
       } else if (event.error === 'not-allowed') {
         errorMessage = 'Microphone access was denied. Please allow microphone access.';
+      } else if (event.error === 'aborted') {
+        // Don't show error for aborted recognition (user stopped)
+        return;
       }
+      
       setPopup({
         open: true,
         severity: 'error',
@@ -208,23 +227,18 @@ const AudioInterview = () => {
       });
     };
 
-    setRecognitionInstance(recog);
+    setRecognition(recognitionInstance);
 
     return () => {
-      try {
-        recog.stop();
-      } catch (e) {}
+      if (recognitionInstance) {
+        try {
+          recognitionInstance.stop();
+        } catch (e) {
+          console.log('Error stopping recognition:', e);
+        }
+      }
     };
   }, [setPopup]);
-
-  // --- Update transcript display ---
-  useEffect(() => {
-    // Show both interim and final transcript in UI
-    setTranscript(formatTranscript((finalTranscript + ' ' + interimTranscript).trim()));
-  }, [finalTranscript, interimTranscript]);
-
-  // --- Start/Stop Recording and Speech Recognition ---
-  // (Removed duplicate toggleRecording function to resolve redeclaration error)
 
   // Helper function to format transcript with proper capitalization and punctuation
   const formatTranscript = (text) => {
